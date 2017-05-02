@@ -266,7 +266,7 @@ class QisInterface:
 			sock = self.sock		
 		scanWait = 2
 		#print 'Scanning for devices and waiting ' + str(scanWait) + ' seconds.'
-		devString = self.sendText(sock,'$scan')
+		devString = self.sendAndReceiveText(sock, '$scan')
 		time.sleep(scanWait)
 		devString = self.sendAndReceiveText(sock, '$list')
 		#print '"' + devString + '"'
