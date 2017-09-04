@@ -4,6 +4,7 @@ import time
 import sys
 import os
 import datetime
+import select
 import threading
 
 #QisInterface provides a way of connecting to a Quarch backend running at the specified ip address and port, defaults to localhost and 9722
@@ -65,24 +66,34 @@ class QisInterface:
 		#Create the thread		
 		self.t1 = threading.Thread(target=self.startStreamThread, args=(module, fileName, fileMaxMB, streamName))                
 		#Start the thread        
-		self.t1.start()
-		
+		self.t1.start()		
 		#Don't return until rec stream has been issued
 		while not self.threadStreamRunSentEvent.isSet():
 			donothing = 1
+		time.sleep(0.1)
 		
 	def stopStream(self, module):	
 		try:
+			#print '!!!!!!!!!!!!!!!!! stopStream !!!!!!!!!!!!!!!!'
 			self.threadRunEvent.set()
+			time.sleep(0.1)			
+			# Wait until tge stream thread is finished before returning to user.
+			# This means this function will block until the QIS buffer is emptied by the second while loop in startStreanThread. 
+			# This may take some time, especially at low averaging but should gurantee the data won't be lost and QIS buffer is emptied.
 			while self.t1.isAlive():
-				waitforit = 1
-
+				time.sleep(0.5)
+			#print '!!!!!!!!!!!!!!!!! T1 IS OVER !!!!!!!!!!!!!!!!'
+			#try to make sure thread is really over before returning
+			time.sleep(0.1)
 		except:
-			print 'stopStream exception'
-			print self.sendAndReceiveCmd('rec stop', device=module)	
+			print '!!!!!!!!!!!!!!!!!!  stopStream exception !!!!!!!!!!!!!!!!!!'
 			raise
 		
-	# The objects connection needs to be opened (connect()) before this is used	
+	# This is the function that is ran when t1 is created. It is ran in a seperate thread from the main application so streaming can
+	# happen without blocking the main application from doing other things.
+	# Within this function/thread you have to be very careful not to try and 'communicate'  with anything from other threads. If you do
+	# you MUST use a thread safe way of communicating. The thread creates it's own socket and should use that NOT the objects socket
+	# (which some of the comms with module functions will use by default).
 	def startStreamThread(self, module, fileName='streamData.txt', fileMaxMB=2000, streamName='Stream With No Name'):
 		#Create a new socket and connect to back end
 		try:			
@@ -101,8 +112,13 @@ class QisInterface:
 		try:			
 			stripes = ['Empty Header']			
 			#Send stream command so module starts streaming data into the backends buffer
-			print self.sendAndReceiveCmd(streamSock, 'rec stream', device=module)
-			self.threadStreamRunSentEvent.set()			
+			streamRes = self.sendAndReceiveCmd(streamSock, 'rec stream', device=module)
+			print streamRes
+			if ('rec stream : OK' in streamRes):
+				self.threadStreamRunSentEvent.set()
+			else:
+				print 'FAILED TO START STREAM'
+				return
 			#If recording to file then get header for file
 			if(fileName is not None):
 				averaging = self.streamHeaderAverage(device=module, sock=streamSock)
@@ -123,55 +139,89 @@ class QisInterface:
 					formatHeader = self.streamHeaderFormat(device=module, sock=streamSock)					
 					f.write(streamName + ', ' + version + ', ' + module + ', ' + timeStampHeader + ', avg=' + str(averaging) + ' samples per stripe, stripeRate=' + str(stripeRate) + ' stripes per second\n')
 					f.write(formatHeader + '\n')
-			numStripesPerRead = 4096			
-			#Until the event threadRunEvent is set externally to this thread, loop and read from the stream		
+			numStripesPerRead = 4096
 			maxFileExceeded = False
-			while not self.threadRunEvent.isSet():								
-				newStripes = self.streamGetStripesText(streamSock, module, numStripesPerRead)									
-				if(fileName is not None):				
-					#Check file size isn't too big
-					fileInfo = os.stat(fileName)
-					fileMB = fileInfo.st_size / 1000000					
-					if fileMB < fileMaxMB:									
-						with open(fileName, 'a') as f:
-							for s in newStripes:
-								f.write(s + '\n')
-					else:
-						with open(fileName, 'a') as f:
-							maxFileExceeded = True
-							maxFileStatus = self.streamBufferStatus(device=module)
-							self.threadRunEvent.set()												
-			print self.sendAndReceiveCmd(streamSock, 'rec stop', device=module)				
-			recStopIssueDelay=0.5
-			time.sleep(recStopIssueDelay)
+			openAttempts = 0
+			isRun = 0
+			while isRun == 0:
+				try:
+					with open(fileName, 'a') as f:
+						fileMB = 0
+						fileRaw = 0
+						#Until the event threadRunEvent is set externally to this thread, loop and read from the stream	
+						while not self.threadRunEvent.isSet():
+							newStripes = self.streamGetStripesText(streamSock, module, numStripesPerRead)
+							#time.sleep(0.1)
+							
+							#Check file size isn't too big
+							if len(newStripes) > 0:
+								#fileRaw += len(newStripes)
+								#fileMBAdd = fileRaw >> 20
+								#if (fileMBAdd > 0):
+								#	fileMB += fileMBAdd
+								#	fileRaw -= fileMBAdd * 1048576
+								#Writes in file if not too big else stops streaming
+								#if fileMB < fileMaxMB:									
+								for s in newStripes:
+									f.write(s + '\n')
+									#time.sleep(0.01)
+								#else:
+								#	maxFileExceeded = True
+								#	print 'QisInterface file size exceeded  in loop 1 - breaking'
+								#	maxFileStatus = self.streamBufferStatus(device=module)
+								#	time.sleep(0.1)
+								#	break
+							else:
+								#print '!!!!!!!!!!!!!!!!!!!  GOT NO STRIPES  !!!!!!!!!!!!!!!!'	
+								# there's no stripes in the buffer - it's not filling up fast - sleeps so we don't spam qis with requests (seems to make QIS crash)
+								# it might be clever to change the sleep time accoring to the situation e.g. wait longer with higher averaging or lots of no stripes in a row
+								#time.sleep(0.3)								
+								#print ('  !!!!!!!!!!!!GOT NO STRIPES  !!!!!!!!!!!!!')
+								streamStatus = self.streamRunningStatus(device=module, sock=streamSock)
+								time.sleep(0.3)
+								if ("Overrun" in streamStatus):
+									print 'QisInterface overrun - breaking'
+						#print 'THREAD LOOP EXITED'
 						
-			#If the backend buffer still has data then keep reading it out
-			fileInfo = os.stat(fileName)
-			fileMB = fileInfo.st_size / 1000000			
-			print 'Streaming stopped. Emptying data left in backend buffer to file (' + self.streamBufferStatus(device=module, sock=streamSock) + ')'
-			newStripes = self.streamGetStripesText(streamSock, module, numStripesPerRead)
-			while len(newStripes) > 0:
-				fileInfo = os.stat(fileName)
-				fileMB = fileInfo.st_size / 1000000
-				if fileMB < fileMaxMB:									
-					with open(fileName, 'a') as f:
-						for s in newStripes:
-							f.write(s + '\n')
-					newStripes = self.streamGetStripesText(streamSock, module, numStripesPerRead)
-				else:
-					with open(fileName, 'a') as f:
-						if not maxFileExceeded:
-							maxFileStatus = self.streamBufferStatus(device=module)
-						maxFileExceeded = True											
+						print self.sendAndReceiveCmd(streamSock, 'rec stop', device=module)
+						time.sleep(0.2)
+						
+						#If the backend buffer still has data then keep reading it out
+						print 'Streaming stopped. Emptying data left in QIS buffer to file (' + self.streamBufferStatus(device=module, sock=streamSock) + ')'
+						time.sleep(0.1)
 						newStripes = self.streamGetStripesText(streamSock, module, numStripesPerRead)
-				#print 'Emptying backend buffer: ' + self.streamBufferStatus(device=module)
-			if maxFileExceeded:
-				with open(fileName, 'a') as f:
-					f.write('Warning: Max file size exceeded before end of stream.\n')
-					f.write('Unrecorded stripes in buffer when file full: ' + maxFileStatus + '.')		
-				print 'Warning: Max file size exceeded. Some data has not been saved to file: ' + maxFileStatus + '.'
-					
-			print 'Stripes in buffer now: ' + self.streamBufferStatus(device=module, sock=streamSock)
+						time.sleep(0.1)
+						while len(newStripes) > 0:						
+							#print '2nd loop len newStripes='+str(len(newStripes))							
+							fileRaw += len(newStripes)
+							fileMBAdd = fileRaw >> 20
+							if (fileMBAdd > 0):
+								fileMB += fileMBAdd
+								fileRaw -= fileMBAdd * 1048576
+								
+							if fileMB < fileMaxMB:
+								for s in newStripes:
+									f.write(s + '\n')
+							else:
+								if not maxFileExceeded:
+									maxFileStatus = self.streamBufferStatus(device=module,  sock=streamSock)
+									maxFileExceeded = True																												
+							time.sleep(0.01) #reduce speed of loop to stop spamming qis
+							newStripes = self.streamGetStripesText(streamSock, module, numStripesPerRead)
+							
+						if maxFileExceeded:
+							f.write('Warning: Max file size exceeded before end of stream.\n')
+							f.write('Unrecorded stripes in buffer when file full: ' + maxFileStatus + '.')		
+							print 'Warning: Max file size exceeded. Some data has not been saved to file: ' + maxFileStatus + '.'								
+						print 'Stripes in buffer now: ' + self.streamBufferStatus(device=module, sock=streamSock)
+						isRun = 1
+				except IOError:
+					print '\n\n!!!!!!!!!!!!!!!!!!!! IO Error in QisInterface !!!!!!!!!!!!!!!!!!!!\n\n'
+					time.sleep(0.5)
+					openAttempts += 1
+					if openAttempts > 4:
+						isRun = 1
+						raise
 		except:
 			raise			
 		#Close streams socket
@@ -180,7 +230,7 @@ class QisInterface:
 			streamSock.close()
 		except:			
 			raise
-
+			
 	# Send text and get the backends response. - acts as wrapper to the sendAndReceiveText, intended to provide some extra convenience
 	# when sending commands to module (as opposed to back end)
 	# If read until cursor is set to True (which is default) then keep reading response until a cursor is returned as the last character of result string
@@ -196,67 +246,92 @@ class QisInterface:
 			res = res[:-3] #remove last three chars - hopefully '\r\n>'
 		return cmd + ' : ' + res
 	
+	    	
 	# Send text to the back end then read it's response
 	# The objects connection needs to be opened (connect()) before this is used
 	# If read until cursor is set to True (which is default) then keep reading response until a cursor is returned as the last character of result string
 	def sendAndReceiveText(self, sock, sendText='$help', device='', readUntilCursor=True):
-		try:				
+		try:						
+			#print 'sending text:"' + sendText + '"'
 			self.sendText(sock, sendText, device)
-			res = sock.recv(self.maxRxBytes)			
+			time.sleep(0.1)
+			res = self.rxBytes(sock)
 			#print 'res="' + res + '"'
 			#Somtimes we just get one cursor back of currently unknown origins
 			#If that happens discard it and read again
 			if res == '>':
 				#print " CURSOR ONLY"
-				res = self.sock.recv(self.maxRxBytes)			
+				res = self.rxBytes(sock)
 			#If create socked fail (between backend and tcp/ip module)
 			if 'Create Socket Fail' in res:
-				print res			
+				print res
 			if 'Connection Timeout' in res:				
 				print res
 			#If reading until  a cursor comes back then keep reading until a cursor appears or max tries exceeded
 			if readUntilCursor:
-				maxReads = 100
+				maxReads = 1000
 				count = 0
 				#check for cursor at end of read and if not there read again
 				while res[-1:] != '>':
-					#print 'Reading Again ' + str(count)
-					#time.sleep(1)
-					newRes = sock.recv(self.maxRxBytes)
-					#print 'newRes=' + newRes
+					newRes = self.rxBytes(sock)
 					res = res + newRes
-
 					count = count + 1
 					if count >= maxReads:
 						myStr = ' Count = Error: max reads exceeded before cursor returned\r\n'
-						#print myStr
+						print myStr
 						return myStr						
 			return res
 		except:
 			raise
-			exc_type, exc_obj, exc_tb = sys.exc_info()
-			fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-			res = 'Failed when trying receive. ' + self.host + ':' + str(self.port) + ' \r\n' + str(exc_type) + ' ' + str(fname) + ' ' + str(exc_tb.tb_lineno) + '\r\n' 
-			print res
-			return res
 
+	def rxBytes(self,sock):
+		#sock.setblocking(0) #make socket non-blocking		
+		maxExceptions=10	
+		exceptions=0
+		maxReadRepeats=50
+		readRepeats=0
+		timeout_in_seconds = 10
+		#Keep trying to read bytes until we get some, unless number of read repeads or exceptions is exceeded
+		while True:	
+			try:
+				#select.select returns a list of waitable objects which are ready. On windows it has to be sockets.
+				#The first arguement is a list of objects to wait for reading, second writing, third 'exceptional condition'
+				#We only use the read list and our socket to check if it is readable. if no timeout is specified then it blocks until it becomes readable.
+				ready = select.select([sock], [], [], timeout_in_seconds)
+				if ready[0]:
+					ret = sock.recv(self.maxRxBytes)
+					return ret
+				else:
+					print 'rxBytes - readRepeats + 1'
+					readRepeats=readRepeats+1
+					time.sleep(0.5)
+			except:
+				print 'rxBytes - exceptions + 1'
+				#raise
+				exceptions=exceptions+1
+				time.sleep(0.5)			
+			#If read repeats has been exceeded we failed to get any data on this read.
+			#   !!! This is likely to break whatever called us !!!
+			if readRepeats >= maxReadRepeats:
+				print 'Max read repeats exceeded - returning.'
+				return 'No data received from QIS'
+			#If number of exceptions exceeded then give up by exiting
+			if exceptions >= maxExceptions:
+				print 'Max exceptions exceeded - exiting' #exceptions are probably 10035 non-blocking socket could not complete immediatley
+				exit()			
 	# Send text to the back end don't read it's response
-	# The objects connection needs to be opened (connect()) before this is used			
+	# The sockets connection needs to be opened (connect()) before this is used			
 	def sendText(self, sock, message='$help', device=''):
 		if device != '':
 			specialTimeout =  '%500000'
 			message = device + specialTimeout +  ' ' + message			
 			#print 'Sending: "' + message + '" ' + self.host + ':' + str(self.port)
-		try:			
+		try:
 			sock.sendall(message + '\r\n')
 			return 'Sent:' + message
 		except:
 			raise
-			exc_type, exc_obj, exc_tb = sys.exc_info()
-			fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-			res = 'Failed when trying send. ' + self.host + ':' + str(self.port) + ' \r\n' + str(exc_type) + ' ' + str(fname) + ' ' + str(exc_tb.tb_lineno) + '\r\n' 
-			#print res
-			return res
+			
             
 	# Query the backend for a list of connected modules. A $scan command is sent to refresh the list of devices,
 	# Then a wait occurs while the backend discovers devices (network ones can take a while) and then a list of device name strings is returned
