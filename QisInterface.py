@@ -78,21 +78,21 @@ class QisInterface:
 			self.threadRunEvent.set()
 			time.sleep(0.1)			
 			# Wait until tge stream thread is finished before returning to user.
-			# This means this function will block until the QIS buffer is emptied by the second while loop in startStreanThread. 
-			# This may take some time, especially at low averaging but should gurantee the data won't be lost and QIS buffer is emptied.
+			# This means this function will block until the QIS buffer is emptied by the second while 
+			# loop in startStreanThread. This may take some time, especially at low averaging but 
+			# should gurantee the data won't be lost and QIS buffer is emptied.
 			while self.t1.isAlive():
 				time.sleep(0.5)
-			#print '!!!!!!!!!!!!!!!!! T1 IS OVER !!!!!!!!!!!!!!!!'
-			#try to make sure thread is really over before returning
 			time.sleep(0.1)
 		except:
 			print '!!!!!!!!!!!!!!!!!!  stopStream exception !!!!!!!!!!!!!!!!!!'
 			raise
 		
-	# This is the function that is ran when t1 is created. It is ran in a seperate thread from the main application so streaming can
-	# happen without blocking the main application from doing other things.
-	# Within this function/thread you have to be very careful not to try and 'communicate'  with anything from other threads. If you do
-	# you MUST use a thread safe way of communicating. The thread creates it's own socket and should use that NOT the objects socket
+	# This is the function that is ran when t1 is created. It is ran in a seperate thread from 
+	# the main application so streaming can happen without blocking the main application from 
+	# doing other things. Within this function/thread you have to be very careful not to try 
+	# and 'communicate'  with anything from other threads. If you do, you MUST use a thread safe 
+	# way of communicating. The thread creates it's own socket and should use that NOT the objects socket
 	# (which some of the comms with module functions will use by default).
 	def startStreamThread(self, module, fileName='streamData.txt', fileMaxMB=2000, streamName='Stream With No Name'):
 		#Create a new socket and connect to back end
@@ -147,74 +147,72 @@ class QisInterface:
 				try:
 					with open(fileName, 'a') as f:
 						fileMB = 0
-						fileRaw = 0
-						#Until the event threadRunEvent is set externally to this thread, loop and read from the stream	
+						fileByte = 0
+						# Until the event threadRunEvent is set externally to this thread, 
+						# loop and read from the stream	
 						while not self.threadRunEvent.isSet():
 							newStripes = self.streamGetStripesText(streamSock, module, numStripesPerRead)
 							#time.sleep(0.1)
-							
-							#Check file size isn't too big
 							if len(newStripes) > 0:
-								#fileRaw += len(newStripes)
-								#fileMBAdd = fileRaw >> 20
-								#if (fileMBAdd > 0):
-								#	fileMB += fileMBAdd
-								#	fileRaw -= fileMBAdd * 1048576
 								#Writes in file if not too big else stops streaming
-								#if fileMB < fileMaxMB:									
-								for s in newStripes:
-									f.write(s + '\n')
-									#time.sleep(0.01)
-								#else:
-								#	maxFileExceeded = True
-								#	print 'QisInterface file size exceeded  in loop 1 - breaking'
-								#	maxFileStatus = self.streamBufferStatus(device=module)
-								#	time.sleep(0.1)
-								#	break
-							else:
-								#print '!!!!!!!!!!!!!!!!!!!  GOT NO STRIPES  !!!!!!!!!!!!!!!!'	
-								# there's no stripes in the buffer - it's not filling up fast - sleeps so we don't spam qis with requests (seems to make QIS crash)
-								# it might be clever to change the sleep time accoring to the situation e.g. wait longer with higher averaging or lots of no stripes in a row
-								#time.sleep(0.3)								
-								#print ('  !!!!!!!!!!!!GOT NO STRIPES  !!!!!!!!!!!!!')
+								#statInfo = os.stat(fileName)
+								#fileMB = statInfo.st_size / 1048576
+								if fileMB < fileMaxMB:									
+									for s in newStripes:
+										f.write(s + '\n')
+										fileByte += (len(s) + 2)
+									if (fileByte > 1048576): 
+										fileMB += fileByte // 1048576
+										fileByte = fileByte % 1048576
+								else:
+									maxFileExceeded = True
+									print 'QisInterface file size exceeded  in loop 1- breaking'
+									maxFileStatus = self.streamBufferStatus(device=module, sock=streamSock)
+									break																	
+							else:	
+								# there's no stripes in the buffer - it's not filling up fast - 
+								# sleeps so we don't spam qis with requests (seems to make QIS crash)
+								# it might be clever to change the sleep time accoring to the situation 
+								# e.g. wait longer with higher averaging or lots of no stripes in a row
 								streamStatus = self.streamRunningStatus(device=module, sock=streamSock)
 								time.sleep(0.3)
 								if ("Overrun" in streamStatus):
 									print 'QisInterface overrun - breaking'
-						#print 'THREAD LOOP EXITED'
 						
 						print self.sendAndReceiveCmd(streamSock, 'rec stop', device=module)
 						time.sleep(0.2)
 						
-						#If the backend buffer still has data then keep reading it out
-						print 'Streaming stopped. Emptying data left in QIS buffer to file (' + self.streamBufferStatus(device=module, sock=streamSock) + ')'
-						time.sleep(0.1)
-						newStripes = self.streamGetStripesText(streamSock, module, numStripesPerRead)
-						time.sleep(0.1)
-						while len(newStripes) > 0:						
-							#print '2nd loop len newStripes='+str(len(newStripes))							
-							fileRaw += len(newStripes)
-							fileMBAdd = fileRaw >> 20
-							if (fileMBAdd > 0):
-								fileMB += fileMBAdd
-								fileRaw -= fileMBAdd * 1048576
-								
-							if fileMB < fileMaxMB:
-								for s in newStripes:
-									f.write(s + '\n')
-							else:
-								if not maxFileExceeded:
-									maxFileStatus = self.streamBufferStatus(device=module,  sock=streamSock)
-									maxFileExceeded = True																												
-							time.sleep(0.01) #reduce speed of loop to stop spamming qis
+						if  not maxFileExceeded:						
+							#If the backend buffer still has data then keep reading it out
+							print 'Streaming stopped. Emptying data left in QIS buffer to file (' + self.streamBufferStatus(device=module, sock=streamSock) + ')'
+							time.sleep(0.1)
 							newStripes = self.streamGetStripesText(streamSock, module, numStripesPerRead)
-							
-						if maxFileExceeded:
-							f.write('Warning: Max file size exceeded before end of stream.\n')
-							f.write('Unrecorded stripes in buffer when file full: ' + maxFileStatus + '.')		
-							print 'Warning: Max file size exceeded. Some data has not been saved to file: ' + maxFileStatus + '.'								
+							time.sleep(0.1)
+							while (len(newStripes) > 0):
+								if fileMB < fileMaxMB:
+									for s in newStripes:
+										f.write(s + '\n')
+										fileByte += (len(s) + 1)
+									if (fileByte > 1048576): 
+										fileMB += fileByte // 1048576
+										fileByte = fileByte % 1048576
+								else:
+									if not maxFileExceeded:
+										maxFileStatus = self.streamBufferStatus(device=module,  sock=streamSock)
+										maxFileExceeded = True
+									break									
+								time.sleep(0.01) #reduce speed of loop to stop spamming qis
+								newStripes = self.streamGetStripesText(streamSock, module, numStripesPerRead)
+								
+							if maxFileExceeded:
+								f.write('Warning: Max file size exceeded before end of stream.\n')
+								f.write('Unrecorded stripes in buffer when file full: ' + maxFileStatus + '.')		
+								print 'Warning: Max file size exceeded. Some data has not been saved to file: ' + maxFileStatus + '.'
+																
 						print 'Stripes in buffer now: ' + self.streamBufferStatus(device=module, sock=streamSock)
+						
 						isRun = 1
+						
 				except IOError:
 					print '\n\n!!!!!!!!!!!!!!!!!!!! IO Error in QisInterface !!!!!!!!!!!!!!!!!!!!\n\n'
 					time.sleep(0.5)
@@ -285,7 +283,8 @@ class QisInterface:
 			raise
 
 	def rxBytes(self,sock):
-		#sock.setblocking(0) #make socket non-blocking		
+		#sock.setblocking(0) #make socket non-blocking
+		
 		maxExceptions=10	
 		exceptions=0
 		maxReadRepeats=50
@@ -305,11 +304,13 @@ class QisInterface:
 					print 'rxBytes - readRepeats + 1'
 					readRepeats=readRepeats+1
 					time.sleep(0.5)
+
 			except:
 				print 'rxBytes - exceptions + 1'
-				#raise
+				raise
 				exceptions=exceptions+1
-				time.sleep(0.5)			
+				time.sleep(0.5)
+			
 			#If read repeats has been exceeded we failed to get any data on this read.
 			#   !!! This is likely to break whatever called us !!!
 			if readRepeats >= maxReadRepeats:
@@ -318,9 +319,10 @@ class QisInterface:
 			#If number of exceptions exceeded then give up by exiting
 			if exceptions >= maxExceptions:
 				print 'Max exceptions exceeded - exiting' #exceptions are probably 10035 non-blocking socket could not complete immediatley
-				exit()			
+				exit()				
+		
 	# Send text to the back end don't read it's response
-	# The sockets connection needs to be opened (connect()) before this is used			
+	# The objects connection needs to be opened (connect()) before this is used			
 	def sendText(self, sock, message='$help', device=''):
 		if device != '':
 			specialTimeout =  '%500000'
