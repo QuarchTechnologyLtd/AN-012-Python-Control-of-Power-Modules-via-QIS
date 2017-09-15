@@ -7,9 +7,6 @@ import datetime
 import select
 import threading
 
-
-#Put stream socket / t1 socket creation/opening/closing into start / end
-
 #QisInterface provides a way of connecting to a Quarch backend running at the specified ip address and port, defaults to localhost and 9722
 class QisInterface:
 	def __init__(self, host='127.0.0.1', port=9722):
@@ -161,24 +158,17 @@ class QisInterface:
 			while isRun == 0:
 				try:
 					with open(fileName, 'a') as f:
-						fileMB = 0
-						fileByte = 0
 						# Until the event threadRunEvent is set externally to this thread, 
 						# loop and read from the stream	
 						while not self.threadRunEvent.isSet():
 							newStripes = self.streamGetStripesText(self.streamSock, module, numStripesPerRead)
-							#time.sleep(0.1)
 							if len(newStripes) > 0:
 								#Writes in file if not too big else stops streaming
-								#statInfo = os.stat(fileName)
-								#fileMB = statInfo.st_size / 1048576
+								statInfo = os.stat(fileName)
+								fileMB = statInfo.st_size / 1048576
 								if fileMB < fileMaxMB:									
 									for s in newStripes:
 										f.write(s + '\n')
-										fileByte += (len(s) + 2)
-									if (fileByte > 1048576): 
-										fileMB += fileByte // 1048576
-										fileByte = fileByte % 1048576
 								else:
 									maxFileExceeded = True
 									print 'QisInterface file size exceeded  in loop 1- breaking'
@@ -194,31 +184,29 @@ class QisInterface:
 								if ("Overrun" in streamStatus):
 									self.threadRunEvent.set()									
 									print 'QisInterface overrun - breaking'									
-									break
+									break																	
 						#print 'Left while 1'
 						print self.sendAndReceiveCmd(self.streamSock, 'rec stop', device=module)
 						time.sleep(0.2)
 						
-						if not maxFileExceeded:						
+						if not maxFileExceeded:
 							#If the backend buffer still has data then keep reading it out
 							print 'Streaming stopped. Emptying data left in QIS buffer to file (' + self.streamBufferStatus(device=module, sock=self.streamSock) + ')'
 							time.sleep(0.1)
 							newStripes = self.streamGetStripesText(self.streamSock, module, numStripesPerRead)
 							time.sleep(0.1)
+							statInfo = os.stat(fileName)
+							fileMB = statInfo.st_size / 1048576
 							while (len(newStripes) > 0):
 								if fileMB < fileMaxMB:
 									for s in newStripes:
 										f.write(s + '\n')
-										fileByte += (len(s) + 1)
-									if (fileByte > 1048576): 
-										fileMB += fileByte // 1048576
-										fileByte = fileByte % 1048576
 								else:
 									if not maxFileExceeded:
 										maxFileStatus = self.streamBufferStatus(device=module,  sock=self.streamSock)
 										maxFileExceeded = True
 									break									
-								time.sleep(0.01) #reduce speed of loop to stop spamming qis
+								#time.sleep(0.01) #reduce speed of loop to stop spamming qis
 								newStripes = self.streamGetStripesText(self.streamSock, module, numStripesPerRead)
 								
 							if maxFileExceeded:
