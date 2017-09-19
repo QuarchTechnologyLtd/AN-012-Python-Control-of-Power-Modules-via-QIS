@@ -2,7 +2,11 @@
 # Iain Robertson - 14/12/2016
 #
 # Examples using QIS (Quarch Instrumentation Server) to stream data from a Quarch Power Module
+import sys, os
 
+libpath = os.path.dirname(os.path.abspath(__file__))
+libpath = os.path.join(libpath, "lib")
+sys.path.insert( 0, os.path.join(libpath,os.path.normpath('QisInterface')) )
 
 import QisInterface #Import the Quarch QisInterface module which gives an interface to the QuarchBackEnd Java program
 import time  #To use sleep
