@@ -7,15 +7,18 @@ import sys, os
 libpath = os.path.dirname(os.path.abspath(__file__))
 libpath = os.path.join(libpath, "lib")
 sys.path.insert( 0, os.path.join(libpath,os.path.normpath('QisInterface')) )
+# The above is required if the QisInterface file is not in the same directory as this script
 
-import QisInterface #Import the QisInterface file. Doing it with 'import QisInterface' requires it to be in the same directory or in path.
+import QisInterface	# Import the QisInterface file.
 
-host =  '127.0.0.1'
-port = 9722
-qis = QisInterface.QisInterface(host=host, port=port) # Create an instance of QisInterface. Before this is ran the QuarchBackEnd needs to have been started
+# If QIS is running on a remote host, replace with its local address
+localHost =  '127.0.0.1'
+
+qis = QisInterface.QisInterface(localHost) 	# Create an instance of QisInterface. Before this is ran QIS needs to have been started
+
 devList = qis.getDeviceList()
 
 print ''
-print 'List of devices attached to backend @ ' + host + ':' + str(port) + ' :\n'
+print 'List of devices attached to QIS:\n'
 for el in devList:
 	print '    ' + el
