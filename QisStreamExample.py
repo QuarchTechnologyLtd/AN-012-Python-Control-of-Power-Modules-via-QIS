@@ -18,8 +18,8 @@ qis = QisInterface.QisInterface(localHost)
 
 def main():
 	# Defines where debugPrint puts the output lines from the script. Comment as appropriate
-	#debugPrintSetup('Command Line')
-	debugPrintSetup('File', 'QisExampleDebug.txt')
+	debugPrintSetup('Command Line')
+	#debugPrintSetup('File', 'QisExampleDebug.txt')
 	
 	# Opening the Connection to the device.  USB and Ethernet are supported in this example.
 	# For USB connections, the connection parameter is "usb::qtl1824-03-161". The full serial number 
@@ -30,10 +30,10 @@ def main():
 	module = "usb::qtl1944-02-028"
 	
 	# Does a simple power margining routine printing results to console or a file
-	#powerMarginingExample(module)
+	powerMarginingExample(module)
 	
 	# Runs a simple stream using default device settings
-	#simpleStream(module)
+	simpleStream(module)
 	
 	# Splits stream data into multiple files. Is a requirement for running at low averaging on XLC and HD
 	multiStreamExample(module)
@@ -66,7 +66,7 @@ def powerMarginingExample(module):
 	
 	# Loop through 6 different voltage levels, reducing by 200mV on each loop
 	testVoltage = 12000
-	for i in xrange(6):
+	for i in range(6):
 		
 		# Set the new voltage level
 		debugPrint(qis.sendCmd(module, "Signal 12V Voltage %d" % testVoltage), 1)
@@ -86,7 +86,7 @@ def powerMarginingExample(module):
 	debugPrint(qis.sendCmd(module, "Signal 12V Voltage 12000"), 1)
 	testVoltage = 3300
 	debugPrint("\n\nMargining results 3V3 rail")
-	for i in xrange(6):
+	for i in range(6):
 		
 		# Set the new voltage level
 		debugPrint(qis.sendCmd(module, "Signal 3V3 Voltage %d" % testVoltage), 1)
@@ -150,9 +150,9 @@ def simpleStream(module):
 			debugPrint('Stream interrupted due to internal device buffer has filled up')
 		elif ("User" in streamStatus):
 			debugPrint('Stream interrupted due to max file size has being exceeded')
-			# Stopped User is currently called because the individual file size excees fileMaxMB
+			# Stopped User is currently called because the individual file size exceeds fileMaxMB
 		else:
-			print "Stopped for unknown reason"
+			print("Stopped for unknown reason")
 	qis.stopStream(module)
 	debugPrint("Stream ran for %d's" % streamTime)
 	debugPrint(qis.sendCmd(module, "Run Power down"), 1)
@@ -164,7 +164,7 @@ def multiStreamExample(module):
 	debugPrint("Running Qis Multi-Stream Example\n\n")
 	debugPrint("Module Name:")
 	debugPrint(qis.sendCmd(module,"hello?"))
-	debugPrint("\n")
+	debugPrint("")
 	
 	# Checks if 3V3 or 5V has automatically been set. If not, manually sets to 3V3
 	if (qis.sendCmd(module, "Config Output Mode?") == "DISABLED"):
@@ -213,9 +213,9 @@ def debugPrintSetup(setting, filename = 'QisExampleDebug.txt'):
 # debugPrint is used either store all responses for debugging or only print useful information to the console
 def debugPrint(text, setting = 0):
 	if (debugPrintType == 0 and setting == 0):
-		print text
+		print(text)
 	elif (debugPrintType == 1):
-		f.write(text + '\n')
+		f.write(text)
 
 # Calling the main() function
 if __name__=="__main__":
