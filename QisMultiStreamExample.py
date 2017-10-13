@@ -8,13 +8,14 @@ libpath = os.path.dirname(os.path.abspath(__file__))
 libpath = os.path.join(libpath, "lib")
 sys.path.insert( 0, os.path.join(libpath,os.path.normpath('QisInterface')) )
 
-import QisInterface #Import the Quarch QisInterface module which gives an interface to the QuarchBackEnd Java program
+import QisInterface #Import the Quarch QisInterface module which gives an interface to the QIS Java program
 import time  #To use sleep
 import sys    #To get args
 
 """ Create an instance of QisInterface. Before this is ran the QuarchBackEnd needs to have been started """
-# The backend can be ran on a different computer so long as network access is available and the correct details given.
-qis = QisInterface.QisInterface(host='127.0.0.1', port=9722)
+# If running QIS on a remote machine, replace localHost with local address of that remote machine
+localHost = '127.0.0.1'
+qis = QisInterface.QisInterface(localHost)
 
 """ A module connected to the backend has to be specified as the streaming device, get it from arg1 """
 try:

@@ -39,16 +39,11 @@ def main():
 	# Splits stream data into multiple files. Is a requirement for running at low averaging on XLC and HD
 	#multiStreamExample(module)
 	
-	# Runs multiple streams at once. This is suitable for a 6 way PPM or multiple individual power modules.
-	# CAUTION, running multiple streams requires a large bandwidth an CPU resource. It is important
-	# to use a large device averaging and if overruns still occur, use multiple PCs instead.
-	# multiDeviceStreamExample(moduleGroup)
-	
 	# Averages data for arbitrary time greater than device averaging
+	
 	# CAUTION, has a percentage error in timing equal to the device averaging time
-	# divided by the time this script averages the data by. I.e. 1 second averaging 
-	# using device averaging of 1k has an error of +/-0.4096%. However, it will not cause 
-	# a culmulative timing error
+	# divided by the time this script averages the data by. I.e. 1 second averaging using 
+	# device averaging of 1k has an error of +/-0.4096%. However, there is no culmulative timing error
 	averageTime = 1	# Time in seconds to average over
 	averageStream(module, averageTime)
 
@@ -212,51 +207,6 @@ def multiStreamExample(module):
 			if ("8388608 of 8388608" in qis.streamBufferStatus(module)):
 				break
 		qis.stopStream(module)
-
-def multiDeviceStreamExample(moduleGroup):
-	# Prints out connected module information
-	debugPrint("Running Qis Multi-Stream Example\n\n")
-	debugPrint("Module Name:")
-	for module in moduleGroup:
-		debugPrint(qis.sendCmd(module,"hello?"))
-		debugPrint("")
-		
-		# Checks if 3V3 or 5V has automatically been set. If not, manually sets to 3V3
-		
-		if (qis.sendCmd(module, "Config Output Mode?") == "DISABLED"):
-			debugPrint("Either using an HD without an intelligent fixture or an XLC. Manually setting voltage")
-			debugPrint(qis.sendCmd(module, "Config Output Mode 3V3"), 1)
-		
-		# Sets the trigger mode such that the stream is controlled by the script.
-		debugPrint(qis.sendCmd(module, "Record Trigger Mode Manual"))
-		
-		debugPrint(qis.sendCmd(module, "Record Averaging 512"))
-	
-	fileNamePart = 'QisMultiExample'
-	count = time.time()
-	streamTime = 10
-	endTime = count + streamTime
-	fileNameCount = 0
-	# Loop to create multiple files
-	while time.time() < endTime:
-		deviceNumber = 1
-		for module in moduleGroup:
-			# Create the current filename
-			fileName = "%(1)s_%(2)d_%(3)d.txt" % {'1' : fileNamePart, '2': fileNameCount, '3': deviceNumber}
-			debugPrint('New file started: ' + fileName)
-			qis.startStream(module, fileName, 2000, 'Stream %d' % deviceNumber)
-			deviceNumber += 1
-		fileNameCount += 1
-		while time.time() < endTime:
-			time.sleep(1)
-			for module in moduleGroup:
-				streamStatus = qis.streamRunningStatus(module)
-				if ("Stopped" in streamStatus):
-					break
-				if ("8388608 of 8388608" in qis.streamBufferStatus(module)):
-					break
-		for module in moduleGroup:
-			qis.stopStream(module)
 
 def averageStream(module, averageTime):
 	# Prints out connected module information
