@@ -4,9 +4,7 @@
 # Examples using QIS (Quarch Instrumentation Server) to stream data from a power module.
 import sys, os
 
-libpath = os.path.dirname(os.path.abspath(__file__))
-libpath = os.path.join(libpath, "lib")
-sys.path.insert( 0, os.path.join(libpath,os.path.normpath('QisInterface')) )
+sys.path.insert( 0, os.path.join(os.path.normpath('lib')) )
 
 import QisInterface #Import the Quarch QisInterface module which gives an interface to the QuarchBackEnd Java program
 import time  #To use sleep
@@ -15,6 +13,7 @@ import sys    #To get args
 # If QIS is running on a remote host, replace with its local address
 localHost =  '127.0.0.1'
 qis = QisInterface.QisInterface(localHost)
+qisList = []
 
 def main():
 	# Defines where debugPrint puts the output lines from the script. Comment as appropriate
@@ -26,7 +25,7 @@ def main():
 	# of your module. For Ethernet connections, the connection parameter is "tcp::1999-02-999". 
 	# The full serial number minus the "qtl" or can use the ip address instead of the serial number.
 	
-	module = "tcp::1995-02-002-001"
+	#module = "tcp::1995-02-002-001"
 	# module = "usb::qtl1944-02-028"
 	
 	# Does a simple power margining routine printing results to console or a file
@@ -46,7 +45,7 @@ def main():
 	# averageTime = 1	# Time in seconds to average over
 	# averageStream(module, averageTime)
 	
-	moduleGroup = ["tcp::1995-02-002-001", "tcp::1995-02-002-002", "tcp::1995-02-002-003", "tcp::1995-02-002-005", "tcp::1995-02-002-004", "tcp::1995-02-002-006"]
+	moduleGroup = ["tcp::1995-02-002-003", "tcp::1995-02-002-006"] #, "tcp::1995-02-002-003", "tcp::1995-02-002-005", "tcp::1995-02-002-004", "tcp::1995-02-002-006"]
 	
 	# Runs multiple streams at once. This is suitable for a 6 way PPM or multiple individual power modules.
 	# CAUTION, running multiple streams requires a large bandwidth an CPU resource. It is important
@@ -291,7 +290,7 @@ def multiDeviceStreamExample(moduleGroup):
 		# Sets the trigger mode such that the stream is controlled by the script.
 		debugPrint(qis.sendCmd(module, "Record Trigger Mode Manual"))
 		
-		debugPrint(qis.sendCmd(module, "Record Averaging 512"))
+		debugPrint(qis.sendCmd(module, "Record Averaging 2"))
 		# Checks device power state
 		CurrentState = qis.sendCmd(module,"run power?")
 		debugPrint("State of the Device:" + (CurrentState))
@@ -305,32 +304,27 @@ def multiDeviceStreamExample(moduleGroup):
 		debugPrint(qis.sendCmd(module, "Stream Mode Power Enable"))
 	
 	fileNamePart = 'QisMultiDeviceExample'
-	fileNameCount = 6
-	streamTime = 600	# Stream time in seconds
+	fileNameCount = 1
+	streamTime = 7200	# Stream time in seconds
 	count = time.time()
 	endTime = count + streamTime
 	# Loop to create multiple files
 	while time.time() < endTime:
-		i = 1
+		deviceNumber = 1
 		for module in moduleGroup:
-			deviceNumber = i
 			fileName = "%(1)s_%(2)d_%(3)d.txt" % {'1' : fileNamePart, '2': fileNameCount, '3': deviceNumber}
 			qis.startStream(module, fileName, 2000, 'Stream %d' % deviceNumber)
 			debugPrint('New file started: ' + fileName)
-			i += 1
+			deviceNumber += 1
 		fileNameCount += 1
 		while time.time() < endTime:
 			time.sleep(1)
-			for module in moduleGroup:
-				streamStatus = qis.streamRunningStatus(module)
-				if ("Stopped" in streamStatus):
-					break
-				if ("8388608 of 8388608" in qis.streamBufferStatus(module)):
-					break
-		#for module in moduleGroup:
-		#	qis.stopStream(module)
-	for module in moduleGroup:
-		qis.stopStream(module)
+			if qis.streamInterrupt():
+				interruptPrint()
+				break
+		for module in moduleGroup:
+			qis.stopStream(module, False)	# Taking a second arguement as False makes this nonBlocking
+		qis.streamingStopped()				# Blocks until all streams have stopped
 
 def debugPrintSetup(setting, filename = 'QisExampleDebug.txt'):
 	global FILENAME, f, debugPrintType
@@ -348,6 +342,14 @@ def debugPrint(text, setting = 0):
 	elif (debugPrintType == 1):
 		f.write(text)
 
+def interruptPrint():
+	for interrupt in qis.interruptList():
+		if interrupt[0] == 'QIS':
+			interruptMessage = interrupt[0] + ' has ' + interrupt[1] + ' because ' + interrupt[2]
+			debugPrint(interruptMessage)
+		if interrupt[1] == 'Stopped':
+			interruptMessage = interrupt[0] + ' has ' + interrupt[1] + ' because ' + interrupt[2]
+			debugPrint(interruptMessage)
 
 # Calling the main() function
 if __name__=="__main__":
