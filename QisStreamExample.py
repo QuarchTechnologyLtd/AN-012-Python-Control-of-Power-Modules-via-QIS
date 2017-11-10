@@ -17,8 +17,13 @@ qisList = []
 
 def main():
 	# Defines where debugPrint puts the output lines from the script. Comment as appropriate
-	debugPrintSetup('Command Line')
-	#debugPrintSetup('File', 'QisExampleDebug.txt')
+	#debugPrintSetup('Off')							# Turns off debug
+	debugPrintSetup('Command Line')					# Prints to command line
+	#debugPrintSetup('File', 'QisExampleDebug.txt')	# Saves debug output to file
+	# debugPrint() will put the string inside the brackets and either do:
+	# Nothing, print to command line or save it to file.
+	# It accepts a second arguement. If set True (default) it will output using the given setting.
+	# If set False, it will do nothing with the string given.
 	
 	# Opening the Connection to the device.  USB and Ethernet are supported in this example.
 	# For USB connections, the connection parameter is "usb::qtl1824-03-161". The full serial number 
@@ -26,33 +31,24 @@ def main():
 	# The full serial number minus the "qtl" or can use the ip address instead of the serial number.
 	
 	#module = "tcp::1995-02-002-001"
-	# module = "usb::qtl1944-02-028"
+	#module = "usb::qtl1944-02-028"
 	
-	# Does a simple power margining routine printing results to console or a file
+	# If streaming from multiple modules, requires a list of all modules to communicate with.
+	moduleGroup = ["tcp::1999-02-999"] # , "tcp::1995-02-002-006"] #, "tcp::1995-02-002-003", "tcp::1995-02-002-005", "tcp::1995-02-002-004", "tcp::1995-02-002-006"]
+	
+	# Arguement is a string describing the connected module
 	#powerMarginingExample(module)
-	
-	# Runs a simple stream using default device settings
-	# simpleStream(module)
-	
-	# Splits stream data into multiple files. Is a requirement for running at low averaging on XLC and HD
+	#simpleStream(module)
 	#multiStreamExample(module)
 	
-	# Averages data for arbitrary time greater than device averaging
+	# Arguements are string describing the connected module and time in seconds to average over
+	#averageTime = 1	# Time in seconds to average over
+	#averageStream(module, averageTime)
 	
-	# CAUTION, has a percentage error in timing equal to the device averaging time
-	# divided by the time this script averages the data by. I.e. 1 second averaging using 
-	# device averaging of 1k has an error of +/-0.4096%. However, there is no culmulative timing error
-	# averageTime = 1	# Time in seconds to average over
-	# averageStream(module, averageTime)
-	
-	moduleGroup = ["tcp::1995-02-002-003", "tcp::1995-02-002-006"] #, "tcp::1995-02-002-003", "tcp::1995-02-002-005", "tcp::1995-02-002-004", "tcp::1995-02-002-006"]
-	
-	# Runs multiple streams at once. This is suitable for a 6 way PPM or multiple individual power modules.
-	# CAUTION, running multiple streams requires a large bandwidth an CPU resource. It is important
-	# to use a large device averaging and if overruns still occur, use multiple PCs instead.
+	# Arguement is a list of modules to stream from.
 	multiDeviceStreamExample(moduleGroup)
 
-
+# Performs a simple power margining routine printing results to console or a file
 def powerMarginingExample(module):
 	# Prints out connected module information
 	debugPrint("Running Qis Stream Example\n\n")
@@ -122,6 +118,7 @@ def powerMarginingExample(module):
 	
 	debugPrint("ALL DONE!")
 
+# Runs a simple stream using default device settings
 def simpleStream(module):
 	# Prints out connected module information
 	debugPrint("Running Qis Stream Example\n\n")
@@ -132,10 +129,10 @@ def simpleStream(module):
 	# Checks if 3V3 or 5V has automatically been set. If not, manually sets to 3V3
 	if (qis.sendCmd(module, "Config Output Mode?") == "DISABLED"):
 		debugPrint("Either using an HD without an intelligent fixture or an XLC. Manually setting voltage")
-		debugPrint(qis.sendCmd(module, "Config Output Mode 5V"), 1)
+		debugPrint(qis.sendCmd(module, "Config Output Mode 5V"), False)
 	
 	# Sets the trigger mode such that the stream is controlled by the script.
-	debugPrint(qis.sendCmd(module, "Record Trigger Mode Manual"), 1)
+	debugPrint(qis.sendCmd(module, "Record Trigger Mode Manual"), False)
 	
 	# Options for start stream:
 	# set the filename to save data to, the max file size and the name for the stream.
@@ -154,7 +151,7 @@ def simpleStream(module):
 	# If outputs are off
 	if CurrentState == "OFF":
 		# Power Up
-		debugPrint(qis.sendCmd(module, "Run Power up"), 1)
+		debugPrint(qis.sendCmd(module, "Run Power up"), False)
 	
 	streamTime = 30
 	time.sleep(streamTime)
@@ -169,10 +166,11 @@ def simpleStream(module):
 			print("Stopped for unknown reason")
 	qis.stopStream(module)
 	debugPrint("Stream ran for %d's" % streamTime)
-	debugPrint(qis.sendCmd(module, "Run Power down"), 1)
+	debugPrint(qis.sendCmd(module, "Run Power down"), False)
 	# The above function is blocking and will wait until all data has been taken from the QIS buffer.
 	debugPrint('Script: Finished Test 1. Data saved to \'Stream 1.txt\'')
 
+# Splits stream data into multiple files. Is a requirement for running at low averaging on XLC or HD
 def multiStreamExample(module):
 	# Prints out connected module information
 	debugPrint("Running Qis Multi-Stream Example\n\n")
@@ -183,12 +181,12 @@ def multiStreamExample(module):
 	# Checks if 3V3 or 5V has automatically been set. If not, manually sets to 3V3
 	if (qis.sendCmd(module, "Config Output Mode?") == "DISABLED"):
 		debugPrint("Either using an HD without an intelligent fixture or an XLC. Manually setting voltage")
-		debugPrint(qis.sendCmd(module, "Config Output Mode 3V3"), 1)
+		debugPrint(qis.sendCmd(module, "Config Output Mode 3V3"), False)
 	
 	# Sets the trigger mode such that the stream is controlled by the script.
-	debugPrint(qis.sendCmd(module, "Record Trigger Mode Manual"), 1)
+	debugPrint(qis.sendCmd(module, "Record Trigger Mode Manual"), False)
 	
-	debugPrint(qis.sendCmd(module, "Record Averaging 32k"), 1)
+	debugPrint(qis.sendCmd(module, "Record Averaging 32k"), False)
 	
 	fileNamePart = 'QisMultiExample'
 	count = time.time()
@@ -213,6 +211,10 @@ def multiStreamExample(module):
 				break
 		qis.stopStream(module)
 
+# Averages data for arbitrary time greater than device averaging
+# CAUTION, has a percentage error in timing equal to the device averaging time
+# divided by the time this script averages the data by. I.e. 1 second averaging using 
+# device averaging of 1k has an error of +/-0.4096%. However, there is no culmulative timing error
 def averageStream(module, averageTime):
 	# Prints out connected module information
 	debugPrint("Running Qis Averaging Example\n\n")
@@ -223,10 +225,10 @@ def averageStream(module, averageTime):
 	# Checks if 3V3 or 5V has automatically been set. If not, manually sets to 3V3
 	if (qis.sendCmd(module, "Config Output Mode?") == "DISABLED"):
 		debugPrint("Either using an HD without an intelligent fixture or an XLC. Manually setting voltage")
-		debugPrint(qis.sendCmd(module, "Config Output Mode 5V"), 1)
+		debugPrint(qis.sendCmd(module, "Config Output Mode 5V"), False)
 	
 	# Sets the trigger mode such that the stream is controlled by the script.
-	debugPrint(qis.sendCmd(module, "Record Trigger Mode Manual"), 1)
+	debugPrint(qis.sendCmd(module, "Record Trigger Mode Manual"), False)
 	
 	# Enables power calculations to be stored in specified file
 	debugPrint(qis.sendCmd(module, "stream mode power enable"))
@@ -251,7 +253,7 @@ def averageStream(module, averageTime):
 	# If outputs are off
 	if CurrentState == "OFF":
 		# Power
-		debugPrint(qis.sendCmd(module, "Run Power up"), 1)
+		debugPrint(qis.sendCmd(module, "Run Power up"), False)
 	
 	streamTime = 30
 	endTime = time.time() + streamTime
@@ -270,10 +272,13 @@ def averageStream(module, averageTime):
 	debugPrint('Stream ran for %d Seconds' % (endTime - time.time()))
 	qis.stopStream(module)
 	debugPrint("Stream ran for %d's" % streamTime)
-	debugPrint(qis.sendCmd(module, "Run Power down"), 1)
+	debugPrint(qis.sendCmd(module, "Run Power down"), False)
 	# The above function is blocking and will wait until all data has been taken from the QIS buffer.
 	debugPrint('Script: Finished Test 1. Data saved to \'Stream 6.txt\'')
 
+# Runs multiple streams at once. This is suitable for a 6 way PPM or multiple individual power modules.
+# CAUTION, running multiple streams requires a large bandwidth an CPU resource. It is important
+# to use a large device averaging and if overruns still occur, use multiple PCs instead.
 def multiDeviceStreamExample(moduleGroup):
 	# Prints out connected module information
 	debugPrint("Running Qis Multi-Stream Example\n\n")
@@ -285,7 +290,8 @@ def multiDeviceStreamExample(moduleGroup):
 		
 		if (qis.sendCmd(module, "Config Output Mode?") == "DISABLED"):
 			debugPrint("Either using an HD without an intelligent fixture or an XLC. Manually setting voltage")
-			debugPrint(qis.sendCmd(module, "Config Output Mode 3V3"), 1)
+			debugPrint(qis.sendCmd(module, "Config Output Mode 5V"), False)
+			time.sleep(3)						# Requires at least 3 seconds between changing output voltage and powering up.
 		
 		# Sets the trigger mode such that the stream is controlled by the script.
 		debugPrint(qis.sendCmd(module, "Record Trigger Mode Manual"))
@@ -298,14 +304,14 @@ def multiDeviceStreamExample(moduleGroup):
 		# If outputs are off
 		if CurrentState == "OFF":
 			# Power Up
-			debugPrint(qis.sendCmd(module, "Run Power up"), 1)
+			debugPrint(qis.sendCmd(module, "Run Power up"), False)
 		
 		# Enables power calculations to be stored in file
 		debugPrint(qis.sendCmd(module, "Stream Mode Power Enable"))
 	
-	fileNamePart = 'QisMultiDeviceExample'
+	fileNamePart = 'QisMultiDeviceExampleshort1'
 	fileNameCount = 1
-	streamTime = 7200	# Stream time in seconds
+	streamTime = 18000	# Stream time in seconds
 	count = time.time()
 	endTime = count + streamTime
 	# Loop to create multiple files
@@ -317,15 +323,19 @@ def multiDeviceStreamExample(moduleGroup):
 			debugPrint('New file started: ' + fileName)
 			deviceNumber += 1
 		fileNameCount += 1
-		while time.time() < endTime:
-			time.sleep(1)
-			if qis.streamInterrupt():
-				interruptPrint()
-				break
+		time.sleep(5)
+		if qis.streamInterrupt():
+			interruptPrint()
+			break
 		for module in moduleGroup:
 			qis.stopStream(module, False)	# Taking a second arguement as False makes this nonBlocking
 		qis.streamingStopped()				# Blocks until all streams have stopped
 
+
+# Sets up debugPrint. The arguements are both strings.
+# setting can be: "Command Line", "File" or "Off".
+# filename is any string ending in .txt. It determines the file name strings are saved to
+# and is not necessary to set when setting is "Command Line" or "Off"
 def debugPrintSetup(setting, filename = 'QisExampleDebug.txt'):
 	global FILENAME, f, debugPrintType
 	if (setting == 'Command Line'):
@@ -334,14 +344,20 @@ def debugPrintSetup(setting, filename = 'QisExampleDebug.txt'):
 		FILENAME = filename
 		f = open(FILENAME, 'w')
 		debugPrintType = 1
+	elif(setting == 'Off'):
+		debugPrintType = 2
 
-# debugPrint is used either store all responses for debugging or only print useful information to the console
-def debugPrint(text, setting = 0):
-	if (debugPrintType == 0 and setting == 0):
+# debugPrint takes two arguements, a string and a boolean
+# The string is either printed to console, saved in a file or 
+def debugPrint(text, setting = False):
+	if (debugPrintType == 0 and setting == False):
 		print(text)
-	elif (debugPrintType == 1):
+	elif (debugPrintType == 1 and setting == False):
 		f.write(text)
+	elif (debugPrintType == 2):
+		return
 
+# An example of formatting the output from qis.interruptList() to make human readable.
 def interruptPrint():
 	for interrupt in qis.interruptList():
 		if interrupt[0] == 'QIS':
