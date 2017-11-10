@@ -315,7 +315,7 @@ def multiDeviceStreamExample(moduleGroup):
 	count = time.time()
 	endTime = count + streamTime
 	# Loop to create multiple files
-	while time.time() < endTime:
+	while True:
 		deviceNumber = 1
 		for module in moduleGroup:
 			fileName = "%(1)s_%(2)d_%(3)d.txt" % {'1' : fileNamePart, '2': fileNameCount, '3': deviceNumber}
@@ -323,6 +323,8 @@ def multiDeviceStreamExample(moduleGroup):
 			debugPrint('New file started: ' + fileName)
 			deviceNumber += 1
 		fileNameCount += 1
+		if fileNameCount > 100:
+			fileNameCount = 1
 		time.sleep(5)
 		if qis.streamInterrupt():
 			interruptPrint()
