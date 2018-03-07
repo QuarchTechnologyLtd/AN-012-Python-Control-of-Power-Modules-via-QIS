@@ -4,9 +4,8 @@
 # Example demonstrating the use of QIS (Quarch Instrumentation Server) to find modules that can be controller
 import sys, os
 
-libpath = os.path.dirname(os.path.abspath(__file__))
-libpath = os.path.join(libpath, "lib")
-sys.path.insert( 0, os.path.join(libpath,os.path.normpath('QisInterface')) )
+sys.path.insert( 0, os.path.join(os.path.normpath('lib')) )
+
 # The above is required if the QisInterface file is not in the same directory as this script
 
 import QisInterface	# Import the QisInterface file.

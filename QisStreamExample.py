@@ -30,11 +30,11 @@ def main():
 	# of your module. For Ethernet connections, the connection parameter is "tcp::1999-02-999". 
 	# The full serial number minus the "qtl" or can use the ip address instead of the serial number.
 	
-	#module = "tcp::1995-02-002-001"
-	#module = "usb::qtl1944-02-028"
+	#module = "tcp::1999-02-004"
+	#module = "usb::1999-02-004"
 	
 	# If streaming from multiple modules, requires a list of all modules to communicate with.
-	moduleGroup = ["tcp::1999-02-999"] # , "tcp::1995-02-002-006"] #, "tcp::1995-02-002-003", "tcp::1995-02-002-005", "tcp::1995-02-002-004", "tcp::1995-02-002-006"]
+	moduleGroup = ["usb::QTL1999-02-004"] # , "tcp::1995-02-002-006"] #, "tcp::1995-02-002-003", "tcp::1995-02-002-005", "tcp::1995-02-002-004", "tcp::1995-02-002-006"]
 	
 	# Arguement is a string describing the connected module
 	#powerMarginingExample(module)
