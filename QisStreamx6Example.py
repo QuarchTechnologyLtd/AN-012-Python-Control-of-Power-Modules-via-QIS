@@ -1,5 +1,9 @@
+# Imports the necessary QuarchPy parts. 
 from quarchpy import quarchDevice, quarchPPM, startLocalQIS
-import time, sys, os
+
+# Other imports.
+import sys, os
+import time
 
 ############ EDIT HERE. 
 fileNamePart = 'QisMultiDeviceExampleshort1'    # Output file name.
@@ -31,7 +35,7 @@ def main():
     quarchHDppm5 = quarchPPM(quarchDevice5)
     quarchHDppm6 = quarchPPM(quarchDevice6)
 
-    # Creates a list with the PPM devices.
+    # Create a list with the PPM devices. 
     quarchHDlist = [quarchHDppm1, quarchHDppm2, quarchHDppm3, quarchHDppm4, quarchHDppm5, quarchHDppm6]
 
     # All functions using PPM devices should be called after the connections are opened and before they are closed.
@@ -47,6 +51,14 @@ def main():
 
     
 ''' Runs multiple streams at once. This is suitable for a 6 way PPM or multiple individual power modules.
+
+- The first loop will set up the output mode for all the devices to 5V,  power up all the outputs if they are powered down and set up the stream.
+it will return OK for each module sucessfully configured.
+
+- The second loop will execute until "endTime". It starts the stream for each individual module and set up the data files, and enters a nested loop
+that will print the power in each module. It closes the connection in each module after "endTime".
+
+Your data files will be in the same directory of your script. 
 '''
 def multiDeviceStreamExample(quarchHDlist):
 
@@ -81,7 +93,7 @@ def multiDeviceStreamExample(quarchHDlist):
         else:
             print("OK")
      
-        ## Enables power calculations to be stored in file
+        # Enables power calculations to be stored in file
         module.sendCommand("Stream Mode Power Enable")
 
     # Wait for user permission to start stream.
@@ -137,6 +149,6 @@ def multiDeviceStreamExample(quarchHDlist):
         module.streamingStopped()				
 
 
-# Calling the main() function
+# Call the main() function.
 if __name__=="__main__":
     main()
