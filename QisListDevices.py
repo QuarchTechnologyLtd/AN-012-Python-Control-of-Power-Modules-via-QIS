@@ -1,22 +1,34 @@
-# QisListDevices.pu
-# Iain Robertson - 14/12/2016
-#
-# Example demonstrating the use of QIS (Quarch Instrumentation Server) to find modules that can be controller
-import sys, os
+'''
+AN-012 - Application note demonstrating control of power modules via QIS
 
-sys.path.insert( 0, os.path.join(os.path.normpath('lib')) )
+This example checks everything is working by connecting to QIS and listing the devices
+available for connection.  This verifies QuarchPy, QIS and the connection to the module(s)
 
-# The above is required if the QisInterface file is not in the same directory as this script
+########### VERSION HISTORY ###########
 
-import QisInterface	# Import the QisInterface file.
+14/12/2016 - Iain Robertson	- Minor edits for formatting and layout
+24/04/2018 - Andy Norrie	- Updated for QuarchPy
 
-# If QIS is running on a remote host, replace with its local address
-localHost =  '127.0.0.1'
+########### INSTRUCTIONS ###########
 
-qis = QisInterface.QisInterface(localHost) 	# Create an instance of QisInterface. Before this is ran QIS needs to have been started
+For localhost QIS, run the example as it is.
+For remote QIS, comment out the 'openQis()' command and specify the IP:Port in the qusInterface(...) command
 
-devList = qis.getDeviceList()
+####################################
+'''
+from quarchpy import qisInterface
 
+# Run the local version of QIS.  If you wish to use a remote version, launch it yourself and comment out this line
+if isQisRunning() == False:
+    openQis();
+
+# Connect to the localhost QIS instance. you can also specify host='127.0.0.1' and port=9722 for remote control
+myQis = qisInterface ()
+
+# Request a list of all USB and LAN accessable modules
+devList = myQis.getDeviceList()
+
+# Print the devices
 print ''
 print 'List of devices attached to QIS:\n'
 for el in devList:
