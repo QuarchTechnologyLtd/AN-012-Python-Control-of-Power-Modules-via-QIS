@@ -1,16 +1,19 @@
-from quarchpy import quarchDevice, quarchPPM
-import time
-import sys, os
+from quarchpy import quarchDevice, quarchPPM, startLocalQIS
+import time, sys, os
 
 ############ EDIT HERE. 
 fileNamePart = 'QisMultiDeviceExampleshort1'    # Output file name.
-streamDuration = 10     # Stream duration.
-fileSize = 2000     # Max file size in mb.
+streamDuration = 10     # Stream duration [s].
+fileSize = 2000     # Max file size [mb].
 #######################
+
 
 ''' Main function should call functions after openning the connections with the devices and before closing it. 
 '''
 def main():
+
+    # Start a local instance of QIS. If you want to connect to a remote QIS, comment this line. 
+    startLocalQIS()
 
     # Create Quarch Device with basic functions - each individual module requires a connection.
     quarchDevice1 = quarchDevice("tcp:1995-02-005-001", ConType = "QIS")
@@ -41,6 +44,7 @@ def main():
     quarchHDppm4.closeConnection()
     quarchHDppm5.closeConnection()
     quarchHDppm6.closeConnection()
+
     
 ''' Runs multiple streams at once. This is suitable for a 6 way PPM or multiple individual power modules.
 '''
@@ -131,7 +135,6 @@ def multiDeviceStreamExample(quarchHDlist):
             module.stopStream()	
 
         module.streamingStopped()				
-
 
 
 # Calling the main() function
