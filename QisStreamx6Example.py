@@ -96,8 +96,12 @@ def multiDeviceStreamExample(quarchHDlist):
         # Enables power calculations to be stored in file
         module.sendCommand("Stream Mode Power Enable")
 
-    # Wait for user permission to start stream.
-    raw_input("\nAll modules successfully configured, press enter to stream...\n")
+    # Wait for user permission to start stream. Try and except to be compatible with both python 2 and 3
+    try:
+        raw_input("\nAll modules successfully configured, press enter to stream...\n")
+    except:
+        input("\nAll modules successfully configured, press enter to stream...\n")
+
 
     # Aux variables. 
     fileNameCount = 1
