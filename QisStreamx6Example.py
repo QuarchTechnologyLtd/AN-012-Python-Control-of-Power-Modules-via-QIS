@@ -1,5 +1,5 @@
 # Imports the necessary QuarchPy parts. 
-from quarchpy import quarchDevice, quarchPPM, startLocalQIS
+from quarchpy import quarchDevice, quarchPPM, startLocalQis
 
 # Other imports.
 import sys, os
@@ -17,7 +17,7 @@ fileSize = 2000     # Max file size [mb].
 def main():
 
     # Start a local instance of QIS. If you want to connect to a remote QIS, comment this line. 
-    startLocalQIS()
+    startLocalQis()
 
     # Create Quarch Device with basic functions - each individual module requires a connection.
     quarchDevice1 = quarchDevice("tcp:1995-02-005-001", ConType = "QIS")
