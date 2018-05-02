@@ -1,5 +1,5 @@
 # Imports the necessary QuarchPy parts. 
-from quarchpy import quarchDevice, quarchPPM, startLocalQis
+from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning
 
 # Other imports.
 import sys, os
@@ -12,12 +12,13 @@ fileSize = 2000     # Max file size [mb].
 #######################
 
 
-''' Main function should call functions after openning the connections with the devices and before closing it. 
+''' Main function should call functions after opening the connections with the devices and before closing it. 
 '''
 def main():
 
-    # Start a local instance of QIS. If you want to connect to a remote QIS, comment this line. 
-    startLocalQis()
+    # isQisRunning([host='127.0.0.1'], [port=9722]) returns True if QIS is running and False if not and start QIS locally.
+    if isQisRunning() == False:
+        startLocalQis()
 
     # Create Quarch Device with basic functions - each individual module requires a connection.
     quarchDevice1 = quarchDevice("tcp:1995-02-005-001", ConType = "QIS")
