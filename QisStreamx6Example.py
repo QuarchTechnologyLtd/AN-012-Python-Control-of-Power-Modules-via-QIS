@@ -1,3 +1,26 @@
+'''
+AN-012 - Application note demonstrating control of power modules via QIS
+
+This example connects to all 6 ports of the QTL1995 and streams from them at the same time.
+
+Data is saved to file(s) with each module being saved into a different file.  A file size limit
+forces data to be stored into multiple smaller files.
+
+########### VERSION HISTORY ###########
+
+14/12/2016 - Iain Robertson	- Minor edits for formatting and layout
+24/04/2018 - Pedro Cruz		- Updated for QuarchPy
+
+########### INSTRUCTIONS ###########
+
+- Set the required streamDuration
+- Set the 
+
+For localhost QIS, run the example as it is.
+For remote QIS, comment out the 'openQis()' command and specify the IP:Port in the qusInterface(...) command
+
+####################################
+'''
 # Imports the necessary QuarchPy parts. 
 from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning
 
@@ -5,14 +28,23 @@ from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning
 import sys, os
 import time
 
-############ EDIT HERE. 
+
+''' 
+Set the filename, duration and file size limit here if you need
+'''
 fileNamePart = 'QisMultiDeviceExampleshort1'    # Output file name.
-streamDuration = 10     # Stream duration [s].
-fileSize = 2000     # Max file size [mb].
-#######################
+streamDuration = 10     						# Stream duration [s].
+fileSize = 2000     							# Max file size [mb].
+myDevice1 = "tcp:1995-02-005-001"				# Set the ID of the modules to use here
+myDevice2 = "tcp:1995-02-005-002"
+myDevice3 = "tcp:1995-02-005-003"
+myDevice4 = "tcp:1995-02-005-004"
+myDevice5 = "tcp:1995-02-005-005"
+myDevice6 = "tcp:1995-02-005-006"
 
 
-''' Main function should call functions after opening the connections with the devices and before closing it. 
+''' 
+Main function to connect to the modules and begin streaming
 '''
 def main():
 
@@ -21,12 +53,12 @@ def main():
         startLocalQis()
 
     # Create Quarch Device with basic functions - each individual module requires a connection.
-    quarchDevice1 = quarchDevice("tcp:1995-02-005-001", ConType = "QIS")
-    quarchDevice2 = quarchDevice("tcp:1995-02-005-002", ConType = "QIS")
-    quarchDevice3 = quarchDevice("tcp:1995-02-005-003", ConType = "QIS")
-    quarchDevice4 = quarchDevice("tcp:1995-02-005-004", ConType = "QIS")
-    quarchDevice5 = quarchDevice("tcp:1995-02-005-005", ConType = "QIS")
-    quarchDevice6 = quarchDevice("tcp:1995-02-005-006", ConType = "QIS")
+    quarchDevice1 = quarchDevice(myDevice1, ConType = "QIS")
+    quarchDevice2 = quarchDevice(myDevice2, ConType = "QIS")
+    quarchDevice3 = quarchDevice(myDevice3, ConType = "QIS")
+    quarchDevice4 = quarchDevice(myDevice4, ConType = "QIS")
+    quarchDevice5 = quarchDevice(myDevice5, ConType = "QIS")
+    quarchDevice6 = quarchDevice(myDevice6, ConType = "QIS")
 
     # Upgrade the basic Quarch Devices to PPMs modules, adding specific functions.
     quarchHDppm1 = quarchPPM(quarchDevice1)
@@ -36,10 +68,9 @@ def main():
     quarchHDppm5 = quarchPPM(quarchDevice5)
     quarchHDppm6 = quarchPPM(quarchDevice6)
 
-    # Create a list with the PPM devices. 
+    # Create a list with the PPM devices, and call the multi stream example.  This function blocks until the stream is complete so any custom code
+	# you require needs to go within multiDeviceStreamExample
     quarchHDlist = [quarchHDppm1, quarchHDppm2, quarchHDppm3, quarchHDppm4, quarchHDppm5, quarchHDppm6]
-
-    # All functions using PPM devices should be called after the connections are opened and before they are closed.
     multiDeviceStreamExample(quarchHDlist)
 
     # Close the connections with each PPM device.
@@ -51,10 +82,14 @@ def main():
     quarchHDppm6.closeConnection()
 
     
-''' Runs multiple streams at once. This is suitable for a 6 way PPM or multiple individual power modules.
+''' 
+Runs multiple streams at once. This is suitable for a 6 way PPM or multiple individual power modules.  This is a blocking function, as it includes code to display
+the instantaneous output of each port on screen, to demonstrate that additional actions can be undertaken while the stream is running.
+
+You could also place your own code here to change the output voltage as part of a test, or perhaps to send commands and traffic to the drive.
 
 - The first loop will set up the output mode for all the devices to 5V,  power up all the outputs if they are powered down and set up the stream.
-it will return OK for each module sucessfully configured.
+it will return OK for each module successfully configured.
 
 - The second loop will execute until "endTime". It starts the stream for each individual module and set up the data files, and enters a nested loop
 that will print the power in each module. It closes the connection in each module after "endTime".
@@ -83,6 +118,7 @@ def multiDeviceStreamExample(quarchHDlist):
         
         # Sets the trigger mode such that the stream is controlled by the script.
         module.sendCommand("Record Trigger Mode Manual")
+		# Set the averaging rage to one sample every ~0.25mS
         module.sendCommand("Record Averaging 64")
 
         # Checks device power state

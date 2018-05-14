@@ -4,6 +4,10 @@ AN-012 - Application note demonstrating control of power modules via QIS
 This example demonstrates several different control actions on power modules
 Examples include sending commands and recording to file
 
+- Power margining
+- Simple stream example
+- Arbitrary timebase re-sampling example
+
 ########### VERSION HISTORY ###########
 
 20/09/2017 - Tom Pope	    - First version
@@ -12,28 +16,35 @@ Examples include sending commands and recording to file
 ########### INSTRUCTIONS ###########
 
 1. Select the connection ID of the module you want to use
-2. Comment in the test function that you want to run
+2. Comment in/out the test function that you want to run in the main() function)
 
 ####################################
 '''
 import sys, os
 import time
-from quarchpy import quarchPPM
+from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning
+
+'''
+Select the device you want to connect to here!
+'''
+myDeviceID = "tcp:1995-02-005-001"
+
 
 def main():
 
-    # Run the local version of QIS.  If you wish to use a remote version, launch it yourself and comment out this line
+    # isQisRunning([host='127.0.0.1'], [port=9722]) returns True if QIS is running and False if not and start QIS locally.
     if isQisRunning() == False:
-        openQis();
+        startLocalQis()
 
     # Specify the device to connect to, we are using a local version of QIS here, otherwise specify "QIS:192.168.1.101:9722"
-    quarchDevice = quarchDevice("tcp:1995-02-005-001", ConType = "QIS")
+    myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS")
     # Convert the base device to a power device
-    powerDevice = quarchPPM (quarchDevice)
+    myPowerDevice = quarchPPM (myQuarchDevice)
     
     # Select one or more example functions to run
-    powerMarginingExample(powerDevice)
-    
+    powerMarginingExample (myPowerDevice)
+    simpleStreamExample (myPowerDevice)
+    averageStreamExample (myPowerDevice)
 
 ''' 
 Performs a simple power margining routine printing results to console or a file
@@ -42,7 +53,7 @@ at each step
 '''
 def powerMarginingExample(module):
     # Prints out connected module information
-    print ("Running Qis Stream Example")
+    print ("Running QIS POWER MARGINING Example")
     print ("Module Name:")
     print (module.sendCommand ("hello?"))
     
@@ -60,7 +71,7 @@ def powerMarginingExample(module):
         # Power Up
         print (module.sendCommand ("run:power up"))
     
-    print ("Running power margingin test:")
+    print ("Running power margining test:")
     print ("Margining results for 12V rail")
     
     # Loop through 6 different voltage levels, reducing by 200mV on each loop
@@ -110,9 +121,9 @@ def powerMarginingExample(module):
 '''
 This example streams measurement data to file, by default in the same folder as the script
 '''
-def simpleStream(module):
+def simpleStreamExample(module):
     # Prints out connected module information
-    print ("Running Qis Stream Example")
+    print ("Running QIS SIMPLE STREAM Example")
     print ("Module Name:")
     print (module.sendCommand ("hello?"))
     
@@ -124,10 +135,10 @@ def simpleStream(module):
     # Sets for a manual record trigger, so we can start the stream from the script
     print (module.sendCommand ("record:trigger:mode manual"))
     # Use 4k averaging (around 1 measurement every 32mS)
-    print (module.sendCommand ("record:average 8k"))
+    print (module.sendCommand ("record:averaging 8k"))
     
     # In this example we write to a fixed path
-    module.startStream('Stream1.txt', 'Example stream to file')    
+    module.startStream('Stream1.txt', 2000, 'Example stream to file')    
     
     # Sleep for 2 seconds to ensure good data before it tries to start up.
     time.sleep(2)
@@ -141,35 +152,37 @@ def simpleStream(module):
         # Power Up
         print (module.sendCommand ("run:power up"))
     
-    # Delay for 30 seconds while the stream is running.  You can also continue
+    # Delay for a x seconds while the stream is running.  You can also continue
     # to run your own commands/scripts here while the stream is recording in the background    
-    time.sleep(30)
+    print ("*** Sleep here for a while to allow stream data to record to file")
+    time.sleep(20)
 
     # Check the stream status, so we know if anything went wrong during the stream
     streamStatus = module.streamRunningStatus()
     if ("Stopped" in streamStatus):
         if ("Overrun" in streamStatus):
-            debugPrint('Stream interrupted due to internal device buffer has filled up')
+            print ('Stream interrupted due to internal device buffer has filled up')
         elif ("User" in streamStatus):
-            debugPrint('Stream interrupted due to max file size has being exceeded')            
+            print ('Stream interrupted due to max file size has being exceeded')            
         else:
             print("Stopped for unknown reason")
 
     # Stop the stream.  This function is blocking and will wait until all remaining data has
     # been downloaded from the module
     module.stopStream ()
+    
     # Power down the outputs    
-    debugPrint(module.sendCommand ("run:power down"), False)    
+    print (module.sendCommand ("run:power down"), False)    
 
 
 
 '''
 This example is identical to the simpleStream() example, except that we use the additional QIS
-averaging system to resample the stream to an arbitary timebase
+averaging system to re-sample the stream to an arbitrary timebase
 '''
-def averageStream(module, averageTime):
+def averageStreamExample(module):
     # Prints out connected module information
-    print ("Running Qis Stream Example")
+    print ("Running QIS RESAMPLING Example")
     print ("Module Name:")
     print (module.sendCommand ("hello?"))
     
@@ -184,8 +197,9 @@ def averageStream(module, averageTime):
     print (module.sendCommand ("record:average 16k"))
     
     # SET RESAMPLING HERE
-    # This tells QIS to resample the data at a new timebase of 100 samples a second
-    module.setQisResampling (0.1)
+    # This tells QIS to re-sample the data at a new timebase of 1 samples per second
+    print ("Setting QIS resampling to 1000mS")
+    module.streamResampleMode ("1000ms")
     
     # In this example we write to a fixed path
     module.startStream('Stream1_resampled.txt', 'Example stream to file with resampling')    
@@ -210,9 +224,9 @@ def averageStream(module, averageTime):
     streamStatus = module.streamRunningStatus()
     if ("Stopped" in streamStatus):
         if ("Overrun" in streamStatus):
-            debugPrint('Stream interrupted due to internal device buffer has filled up')
+            print ('Stream interrupted due to internal device buffer has filled up')
         elif ("User" in streamStatus):
-            debugPrint('Stream interrupted due to max file size has being exceeded')            
+            print ('Stream interrupted due to max file size has being exceeded')            
         else:
             print("Stopped for unknown reason")
 
@@ -220,7 +234,7 @@ def averageStream(module, averageTime):
     # been downloaded from the module
     module.stopStream ()
     # Power down the outputs    
-    debugPrint(module.sendCommand ("run:power down"), False)   
+    print (module.sendCommand ("run:power down"), False)   
 
 # Calling the main() function
 if __name__=="__main__":

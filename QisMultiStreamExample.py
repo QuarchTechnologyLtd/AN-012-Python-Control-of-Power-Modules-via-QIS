@@ -1,78 +1,105 @@
-# QisStreamExample.py
-# Iain Robertson - 14/12/2016
-#
-# Examples using QIS (Quarch Instrumentation Server) to stream data from a Quarch Power Module
+'''
+AN-012 - Application note demonstrating control of power modules via QIS
+
+This example demonstrates the ability of the module to run multiple streams in a row.
+This might be used when several work loads are being run on a drive, and each is to be logged seperately
+
+########### VERSION HISTORY ###########
+
+14/12/2016 - Iain Robertson - First version
+24/04/2018 - Andy Norrie	- Updated for QuarchPy
+
+########### INSTRUCTIONS ###########
+
+1. Select the connection ID of the module you want to use
+2. Comment in/out the test function that you want to run in the main() function)
+
+####################################
+'''
+
+# Imports the necessary QuarchPy parts. 
+from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning
+
+# Other imports.
 import sys, os
+import time
 
-libpath = os.path.dirname(os.path.abspath(__file__))
-libpath = os.path.join(libpath, "lib")
-sys.path.insert( 0, os.path.join(libpath,os.path.normpath('QisInterface')) )
+'''
+Select the device you want to connect to here!
+'''
+myDeviceID = "tcp:1995-02-005-001"          # Connection ID of module
+fileNamePart = 'MultiStreamExampleData'     # File name base
+seconds = 20                                # Number of seconds to stream for on each cycle
 
-import QisInterface #Import the Quarch QisInterface module which gives an interface to the QIS Java program
-import time  #To use sleep
-import sys    #To get args
+def main():
 
-""" Create an instance of QisInterface. Before this is ran the QuarchBackEnd needs to have been started """
-# If running QIS on a remote machine, replace localHost with local address of that remote machine
-localHost = '127.0.0.1'
-qis = QisInterface.QisInterface(localHost)
+    # isQisRunning([host='127.0.0.1'], [port=9722]) returns True if QIS is running and False if not and start QIS locally.
+    if isQisRunning() == False:
+        startLocalQis()
 
-""" A module connected to the backend has to be specified as the streaming device, get it from arg1 """
-try:
-	module = sys.argv[1]
-	res = qis.sendAndReceiveCmd(cmd='hello?', device=module)
-	if 'Invalid' in res:
-		print 'Module with name "' + module + '" not found.'
-		raise
-except:
-	print 'Usage: \'python QisStreamExample.py DEVICE_ID\' where DEVICE_ID is the backend device name (e.g. tcp::qtl1995-01-012) of the module you wish to talk to.'
-	print 'Try running QisListDevices.py to get a list of devices attached to backend.'
-	exit()
-print ''
-print 'Script: Using module: ' + module + '\n'
+    # Specify the device to connect to, we are using a local version of QIS here, otherwise specify "QIS:192.168.1.101:9722"
+    myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS")
+    # Convert the base device to a power device
+    module = quarchPPM (myQuarchDevice)
 
-""" Setup module """
-#Start with module powered down and set to 3V3 mode to be safe. If using a 5V device change this.
-print 'Script: ' +  qis.sendAndReceiveCmd(cmd='power down', device=module)
-print 'Script: ' +  qis.sendAndReceiveCmd(cmd='conf out mode 3v3', device=module)
-print 'Script: ' +  qis.sendAndReceiveCmd(cmd='conf stream ena on', device=module)	#Needed for HD PPM only
-print 'Script: ' +  qis.sendAndReceiveCmd(cmd='rec trig mode manual', device=module)
-print ''
-print 'Script: Starting Test'
-fileNamePart = 'StreamExampleData'
-fileNameCount = 1
-avgString = '8' #Increasing averaging done onboard the module reduces the amount of data to be transfered back but also reduces the detail in the data
-print 'Script: ' +  qis.sendAndReceiveCmd(cmd='rec ave ' + avgString, device=module)
-#Switch module outputs on and wait for drive to power up
-print 'Script: ' +  qis.sendAndReceiveCmd(cmd='power up', device=module) 
-time.sleep(2)
+    # Prints out connected module information
+    print ("Running QIS MULTIPLE STREAM Example")
+    print ("Module Name:")
+    print (module.sendCommand ("hello?"))
+    
+    # Output mode is set automatically on HD modules using an HD fixture, otherwise we will chose 3v3 mode for this example
+    if (module.sendCommand ("config:output Mode?") == "DISABLED"):
+        print ("Either using an HD without an intelligent fixture or an XLC. Manually setting voltage to 3v3")
+        print (module.sendCommand ("config:output:mode 3V3"))
+    
+    # Sets for a manual record trigger, so we can start the stream from the script
+    print (module.sendCommand ("record:trigger:mode manual"))
+    # Use 4k averaging (around 1 measurement every 32mS)
+    print (module.sendCommand ("record:averaging 8k"))
 
-# Loop to create multiple stream files
-while fileNameCount < 5:
-	# Create the current file name then increment file counter
-	fileName = fileNamePart + str(fileNameCount) + '.txt'
-	fileNameCount=fileNameCount+1
-	""" Start streaming """
-	qis.startStream(module, streamName='Test 1', fileName=fileName, fileMaxMB=2000)
-	#Module is now recording data to file. It will stop when qis.stopStream(module) is executed, or when a buffer fills
-	#In the meantime this thread continues to run with the recording thread running in the backgroud.
-	
-	#Loop for a while, while recording data, 
-	count = 0
-	seconds = 20 #approx number of seconds (max time) to loop and record in the current file
-	while count < seconds:	
-		time.sleep(0.5)
-		streamStatus = qis.streamRunningStatus(device=module)
-		count=count+0.5
-		#Print the backend buffer status (used stripes out of total backend buffer size) if this fills new data is discarded
-		print 'Script: ' + str(count) + ' out of ' + str(seconds)  +  '. Backend buffer status: Used ' + qis.streamBufferStatus(device=module) + '. Stream State: ' + streamStatus
-		# Check for an overrun and break if found. This will stop the current stream and allow a new one to be started
-		if ("Overrun" in streamStatus):
-			break
-		
-	""" Stop recording """
-	qis.stopStream(module) #This function can block for a while as it only returns once the backends
-#buffer remaining stripes have been copied to file,
-#and if averaging was low a large amount of data can be in the backends buffer
-print ''
-print 'Script: Finished Test 1. Data saved to \'' + fileName +'\''
+    # Check the state of the module and power up if necessary
+    print ("Checking the state of the device and power up if necessary")
+    powerState = module.sendCommand ("run power?")
+    print ("State of the Device: " + (powerState))    
+    # If outputs are off
+    if powerState == "OFF":
+        # Power Up
+        print (module.sendCommand ("run:power up"))
+        time.sleep(2)
+
+    fileNameCount = 1
+    # Loop to create multiple stream files (5 in this example)
+    while fileNameCount < 5:
+
+        # Create the current file name then increment file counter
+        fileName = fileNamePart + str(fileNameCount) + '.txt'
+        fileNameCount=fileNameCount+1
+        
+        # Start the strean
+        module.startStream(fileName, 2000, 'Example stream to file')
+
+        # Module is now recording data to file. It will stop when stopStream () is executed, or when a buffer fills
+        # In the meantime this thread continues to run with the recording thread running in the backgroud.
+    
+        #Loop for the set time (roughly timed in this example), recording data, 
+        count = 0        
+        while count < seconds:	
+
+            # Count up the total stream time
+            time.sleep(0.5)
+            count = count + 0.5
+            streamStatus = qis.streamRunningStatus(device=module)
+            
+            # Print the backend buffer status (used stripes out of total backend buffer size) as a way to view the progress of the stream
+            print 'Script: ' + str(count) + ' out of ' + str(seconds)  +  '. Backend buffer status: Used ' + qis.streamBufferStatus(device=module) + '. Stream State: ' + streamStatus
+            
+            # Check for an overrun and break if found. This will stop the current stream and allow a new one to be started            
+            if module.streamInterrupt():
+                break
+        
+        # Stop the stream.  This command will block until the buffered stream data has been pulled from the module
+        module.stopStream()
+    #buffer remaining stripes have been copied to file,
+    #and if averaging was low a large amount of data can be in the backends buffer
+    print ''
+    print 'Script: Finished Test 1. Data saved to \'' + fileName +'\''
