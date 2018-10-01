@@ -22,7 +22,7 @@ Examples include sending commands and recording to file
 '''
 import sys, os
 import time
-from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning
+from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning, qisInterface
 
 '''
 Select the device you want to connect to here!
@@ -194,7 +194,7 @@ def averageStreamExample(module):
     # Sets for a manual record trigger, so we can start the stream from the script
     print (module.sendCommand ("record:trigger:mode manual"))
     # Set an initial averaging, a bit faster than the final resolution we want
-    print (module.sendCommand ("record:average 16k"))
+    print (module.sendCommand ("record:averaging 16k"))
     
     # SET RESAMPLING HERE
     # This tells QIS to re-sample the data at a new timebase of 1 samples per second
