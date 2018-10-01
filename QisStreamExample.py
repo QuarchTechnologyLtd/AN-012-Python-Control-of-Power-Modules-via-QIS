@@ -27,8 +27,7 @@ from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning, qisIn
 '''
 Select the device you want to connect to here!
 '''
-myDeviceID = "tcp:1995-02-005-001"
-
+myDeviceID = "usb:qtl1824-03-161"
 
 def main():
 
@@ -37,13 +36,13 @@ def main():
         startLocalQis()
 
     # Specify the device to connect to, we are using a local version of QIS here, otherwise specify "QIS:192.168.1.101:9722"
-    myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS")
+    myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS", timeout = "5")
     # Convert the base device to a power device
     myPowerDevice = quarchPPM (myQuarchDevice)
     
     # Select one or more example functions to run
-    powerMarginingExample (myPowerDevice)
-    simpleStreamExample (myPowerDevice)
+    #powerMarginingExample (myPowerDevice)
+    #simpleStreamExample (myPowerDevice)
     averageStreamExample (myPowerDevice)
 
 ''' 
@@ -155,7 +154,7 @@ def simpleStreamExample(module):
     # Delay for a x seconds while the stream is running.  You can also continue
     # to run your own commands/scripts here while the stream is recording in the background    
     print ("*** Sleep here for a while to allow stream data to record to file")
-    time.sleep(20)
+    time.sleep(2)
 
     # Check the stream status, so we know if anything went wrong during the stream
     streamStatus = module.streamRunningStatus()
@@ -173,8 +172,6 @@ def simpleStreamExample(module):
     
     # Power down the outputs    
     print (module.sendCommand ("run:power down"), False)    
-
-
 
 '''
 This example is identical to the simpleStream() example, except that we use the additional QIS
