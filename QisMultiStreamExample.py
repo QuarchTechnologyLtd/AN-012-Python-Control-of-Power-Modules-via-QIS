@@ -8,6 +8,7 @@ This might be used when several work loads are being run on a drive, and each is
 
 14/12/2016 - Iain Robertson - First version
 24/04/2018 - Andy Norrie	- Updated for QuarchPy
+02/10/2018 - Matt Holsey    - Re-updated for QuarchPy
 
 ########### INSTRUCTIONS ###########
 
@@ -27,7 +28,7 @@ import time
 '''
 Select the device you want to connect to here!
 '''
-myDeviceID = "tcp:1995-02-005-001"          # Connection ID of module
+myDeviceID = "usb:QTL1999-02-004"          # Connection ID of module
 fileNamePart = 'MultiStreamExampleData'     # File name base
 seconds = 20                                # Number of seconds to stream for on each cycle
 
@@ -38,7 +39,7 @@ def main():
         startLocalQis()
 
     # Specify the device to connect to, we are using a local version of QIS here, otherwise specify "QIS:192.168.1.101:9722"
-    myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS")
+    myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS", timeout=20)
     # Convert the base device to a power device
     module = quarchPPM (myQuarchDevice)
 
@@ -50,7 +51,7 @@ def main():
     # Output mode is set automatically on HD modules using an HD fixture, otherwise we will chose 3v3 mode for this example
     if (module.sendCommand ("config:output Mode?") == "DISABLED"):
         print ("Either using an HD without an intelligent fixture or an XLC. Manually setting voltage to 3v3")
-        print (module.sendCommand ("config:output:mode 3V3"))
+        print (module.sendCommand ("config:output:mode 5v"))
     
     # Sets for a manual record trigger, so we can start the stream from the script
     print (module.sendCommand ("record:trigger:mode manual"))
@@ -69,11 +70,11 @@ def main():
 
     fileNameCount = 1
     # Loop to create multiple stream files (5 in this example)
-    while fileNameCount < 5:
-
+    while fileNameCount < 6:
+	
         # Create the current file name then increment file counter
         fileName = fileNamePart + str(fileNameCount) + '.txt'
-        fileNameCount=fileNameCount+1
+        fileNameCount+=1
         
         # Start the strean
         module.startStream(fileName, 2000, 'Example stream to file')
@@ -84,14 +85,13 @@ def main():
         #Loop for the set time (roughly timed in this example), recording data, 
         count = 0        
         while count < seconds:	
-
             # Count up the total stream time
             time.sleep(0.5)
-            count = count + 0.5
-            streamStatus = qis.streamRunningStatus(device=module)
+            count += 0.5
+            streamStatus = module.streamRunningStatus()#(device=module)
             
             # Print the backend buffer status (used stripes out of total backend buffer size) as a way to view the progress of the stream
-            print 'Script: ' + str(count) + ' out of ' + str(seconds)  +  '. Backend buffer status: Used ' + qis.streamBufferStatus(device=module) + '. Stream State: ' + streamStatus
+            print 'Script: ' + str(count) + ' out of ' + str(seconds)  +  '. Backend buffer status: Used ' + module.streamBufferStatus() + '. Stream State: ' + streamStatus
             
             # Check for an overrun and break if found. This will stop the current stream and allow a new one to be started            
             if module.streamInterrupt():
@@ -99,7 +99,14 @@ def main():
         
         # Stop the stream.  This command will block until the buffered stream data has been pulled from the module
         module.stopStream()
+		
+		#pause to allow stop / start stream
+        time.sleep(1)
     #buffer remaining stripes have been copied to file,
     #and if averaging was low a large amount of data can be in the backends buffer
     print ''
     print 'Script: Finished Test 1. Data saved to \'' + fileName +'\''
+	
+if __name__=="__main__":
+    main()
+	

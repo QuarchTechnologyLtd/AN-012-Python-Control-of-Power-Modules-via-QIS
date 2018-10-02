@@ -10,6 +10,7 @@ forces data to be stored into multiple smaller files.
 
 14/12/2016 - Iain Robertson	- Minor edits for formatting and layout
 24/04/2018 - Pedro Cruz		- Updated for QuarchPy
+02/10/2018 - Matt Holsey    - Re-updated for QuarchPy
 
 ########### INSTRUCTIONS ###########
 
@@ -22,7 +23,7 @@ For remote QIS, comment out the 'openQis()' command and specify the IP:Port in t
 ####################################
 '''
 # Imports the necessary QuarchPy parts. 
-from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning
+from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning, qisInterface
 
 # Other imports.
 import sys, os
@@ -35,12 +36,12 @@ Set the filename, duration and file size limit here if you need
 fileNamePart = 'QisMultiDeviceExampleshort1'    # Output file name.
 streamDuration = 10     						# Stream duration [s].
 fileSize = 2000     							# Max file size [mb].
-myDevice1 = "tcp:1995-02-005-001"				# Set the ID of the modules to use here
-myDevice2 = "tcp:1995-02-005-002"
-myDevice3 = "tcp:1995-02-005-003"
-myDevice4 = "tcp:1995-02-005-004"
-myDevice5 = "tcp:1995-02-005-005"
-myDevice6 = "tcp:1995-02-005-006"
+myDevice1 = "tcp:QTL1995-02-001-001"				# Set the ID of the modules to use here
+myDevice2 = "tcp:QTL1995-02-001-002"
+myDevice3 = "tcp:QTL1995-02-001-003"
+myDevice4 = "tcp:QTL1995-02-001-004"
+myDevice5 = "tcp:QTL1995-02-001-005"
+myDevice6 = "tcp:QTL1995-02-001-006"
 
 
 ''' 
@@ -52,13 +53,16 @@ def main():
     if isQisRunning() == False:
         startLocalQis()
 
+	##small delay to allow qis to scan for devices before connecting
+    time.sleep(5)
+		
     # Create Quarch Device with basic functions - each individual module requires a connection.
-    quarchDevice1 = quarchDevice(myDevice1, ConType = "QIS")
-    quarchDevice2 = quarchDevice(myDevice2, ConType = "QIS")
-    quarchDevice3 = quarchDevice(myDevice3, ConType = "QIS")
-    quarchDevice4 = quarchDevice(myDevice4, ConType = "QIS")
-    quarchDevice5 = quarchDevice(myDevice5, ConType = "QIS")
-    quarchDevice6 = quarchDevice(myDevice6, ConType = "QIS")
+    quarchDevice1 = quarchDevice(myDevice1, ConType = "QIS", timeout = 20)
+    quarchDevice2 = quarchDevice(myDevice2, ConType = "QIS", timeout = 20)
+    quarchDevice3 = quarchDevice(myDevice3, ConType = "QIS", timeout = 20)
+    quarchDevice4 = quarchDevice(myDevice4, ConType = "QIS", timeout = 20)
+    quarchDevice5 = quarchDevice(myDevice5, ConType = "QIS", timeout = 20)
+    quarchDevice6 = quarchDevice(myDevice6, ConType = "QIS", timeout = 20)
 
     # Upgrade the basic Quarch Devices to PPMs modules, adding specific functions.
     quarchHDppm1 = quarchPPM(quarchDevice1)
@@ -187,7 +191,7 @@ def multiDeviceStreamExample(quarchHDlist):
         for module in quarchHDlist:
             module.stopStream()	
 
-        module.streamingStopped()				
+			
 
 
 # Call the main() function.

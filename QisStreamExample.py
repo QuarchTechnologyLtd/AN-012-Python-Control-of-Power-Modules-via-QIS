@@ -12,6 +12,7 @@ Examples include sending commands and recording to file
 
 20/09/2017 - Tom Pope	    - First version
 24/04/2018 - Andy Norrie	- Updated for QuarchPy
+02/10/2018 - Matt Holsey    - Re-updated for QuarchPy
 
 ########### INSTRUCTIONS ###########
 
@@ -27,7 +28,7 @@ from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning, qisIn
 '''
 Select the device you want to connect to here!
 '''
-myDeviceID = "usb:qtl1999"
+myDeviceID = "usb::QTL1999-02-004"
 
 def main():
 
@@ -36,7 +37,7 @@ def main():
         startLocalQis()
 
     # Specify the device to connect to, we are using a local version of QIS here, otherwise specify "QIS:192.168.1.101:9722"
-    myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS", timeout = "5")
+    myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS")
     # Convert the base device to a power device
     myPowerDevice = quarchPPM (myQuarchDevice)
     

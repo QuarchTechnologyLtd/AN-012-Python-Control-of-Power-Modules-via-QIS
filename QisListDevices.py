@@ -17,6 +17,7 @@ For remote QIS, comment out the 'openQis()' command and specify the IP:Port in t
 ####################################
 '''
 from quarchpy import qisInterface, isQisRunning, startLocalQis
+import time
 
 # Checks is QIS is running on the localhost
 if isQisRunning() == False:
@@ -25,6 +26,9 @@ if isQisRunning() == False:
 
 # Connect to the localhost QIS instance - you can also specify host='127.0.0.1' and port=9722 for remote control.
 myQis = qisInterface()
+
+#small sleep to allow qis to scan for devices
+time.sleep(5)
 
 # Request a list of all USB and LAN accessible modules
 devList = myQis.getDeviceList()
