@@ -155,8 +155,9 @@ def simpleStreamExample(module):
     # Delay for a x seconds while the stream is running.  You can also continue
     # to run your own commands/scripts here while the stream is recording in the background    
     print ("*** Sleep here for a while to allow stream data to record to file")
-    time.sleep(2)
-
+    time.sleep(20)
+	
+	
     # Check the stream status, so we know if anything went wrong during the stream
     streamStatus = module.streamRunningStatus()
     if ("Stopped" in streamStatus):
@@ -203,7 +204,7 @@ def averageStreamExample(module):
     module.startStream('Stream1_resampled.txt', 'Example stream to file with resampling')    
     
     # Sleep for 2 seconds to ensure good data before it tries to start up.
-    time.sleep(20)
+    time.sleep(2)
 
     # Check the state of the module and power up if necessary
     print ("Checking the state of the device and power up if necessary")
@@ -217,7 +218,7 @@ def averageStreamExample(module):
     # Delay for 30 seconds while the stream is running.  You can also continue
     # to run your own commands/scripts here while the stream is recording in the background    
     time.sleep(30)
-
+	
     # Check the stream status, so we know if anything went wrong during the stream
     streamStatus = module.streamRunningStatus()
     if ("Stopped" in streamStatus):

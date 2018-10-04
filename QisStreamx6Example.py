@@ -43,14 +43,6 @@ myDevice4 = "tcp:QTL1995-02-001-004"
 myDevice5 = "tcp:QTL1995-02-001-005"
 myDevice6 = "tcp:QTL1995-02-001-006"
 
-# Set the ID of the modules to use here
-myDevice1 = "tcp:1995-02-001-001"
-myDevice2 = "tcp:1995-02-001-002"
-myDevice3 = "tcp:1995-02-001-003"
-myDevice4 = "tcp:1995-02-001-004"
-myDevice5 = "tcp:1995-02-001-005"
-myDevice6 = "tcp:1995-02-001-006"
-
 
 ''' 
 Main function to connect to the modules and begin streaming
@@ -85,7 +77,6 @@ def main():
     quarchHDlist = [quarchHDppm1, quarchHDppm2, quarchHDppm3, quarchHDppm4, quarchHDppm5, quarchHDppm6]
     multiDeviceStreamExample(quarchHDlist)
 
-    print(qis.getDeviceList())
 
     # Close the connections with each PPM device.
     quarchHDppm1.closeConnection()
