@@ -44,7 +44,7 @@ myDevice5 = "tcp:QTL1995-02-001-005"
 myDevice6 = "tcp:QTL1995-02-001-006"
 
 # Set the ID of the modules to use here
-myDevice1 = "tcp:1995-02-001-001"				
+myDevice1 = "tcp:1995-02-001-001"
 myDevice2 = "tcp:1995-02-001-002"
 myDevice3 = "tcp:1995-02-001-003"
 myDevice4 = "tcp:1995-02-001-004"
@@ -83,7 +83,7 @@ def main():
     # Create a list with the PPM devices, and call the multi stream example.  This function blocks until the stream is complete so any custom code
 	# you require needs to go within multiDeviceStreamExample
     quarchHDlist = [quarchHDppm1, quarchHDppm2, quarchHDppm3, quarchHDppm4, quarchHDppm5, quarchHDppm6]
-    #multiDeviceStreamExample(quarchHDlist)
+    multiDeviceStreamExample(quarchHDlist)
 
     print(qis.getDeviceList())
 
@@ -95,7 +95,6 @@ def main():
     quarchHDppm5.closeConnection()
     quarchHDppm6.closeConnection()
 
-    
 ''' 
 Runs multiple streams at once. This is suitable for a 6 way PPM or multiple individual power modules.  This is a blocking function, as it includes code to display
 the instantaneous output of each port on screen, to demonstrate that additional actions can be undertaken while the stream is running.
