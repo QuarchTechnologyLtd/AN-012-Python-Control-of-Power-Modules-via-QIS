@@ -10,8 +10,8 @@ Examples include sending commands and recording to file
 
 ########### VERSION HISTORY ###########
 
-20/09/2017 - Tom Pope	    - First version
-24/04/2018 - Andy Norrie	- Updated for QuarchPy
+20/09/2017 - Tom Pope       - First version
+24/04/2018 - Andy Norrie    - Updated for QuarchPy
 02/10/2018 - Matt Holsey    - Re-updated for QuarchPy
 
 ########### INSTRUCTIONS ###########
@@ -156,8 +156,8 @@ def simpleStreamExample(module):
     # to run your own commands/scripts here while the stream is recording in the background    
     print ("*** Sleep here for a while to allow stream data to record to file")
     time.sleep(20)
-	
-	
+    
+    
     # Check the stream status, so we know if anything went wrong during the stream
     streamStatus = module.streamRunningStatus()
     if ("Stopped" in streamStatus):
@@ -218,7 +218,7 @@ def averageStreamExample(module):
     # Delay for 30 seconds while the stream is running.  You can also continue
     # to run your own commands/scripts here while the stream is recording in the background    
     time.sleep(30)
-	
+    
     # Check the stream status, so we know if anything went wrong during the stream
     streamStatus = module.streamRunningStatus()
     if ("Stopped" in streamStatus):

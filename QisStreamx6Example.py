@@ -8,8 +8,8 @@ forces data to be stored into multiple smaller files.
 
 ########### VERSION HISTORY ###########
 
-14/12/2016 - Iain Robertson	- Minor edits for formatting and layout
-24/04/2018 - Pedro Cruz		- Updated for QuarchPy
+14/12/2016 - Iain Robertson - Minor edits for formatting and layout
+24/04/2018 - Pedro Cruz     - Updated for QuarchPy
 02/10/2018 - Matt Holsey    - Re-updated for QuarchPy
 
 ########### INSTRUCTIONS ###########
@@ -33,10 +33,10 @@ import time
 ''' 
 Set the filename, duration and file size limit here if you need
 '''
-fileNamePart = 'QisMultiDeviceExampleshort1'    # Output file name.
-streamDuration = 10     						# Stream duration [s].
-fileSize = 2000     							# Max file size [mb].
-myDevice1 = "tcp:QTL1995-02-001-001"				# Set the ID of the modules to use here
+fileNamePart = 'QisMultiDeviceExampleshort1'        # Output file name.
+streamDuration = 10                                 # Stream duration [s].
+fileSize = 2000                                     # Max file size [mb].
+myDevice1 = "tcp:QTL1995-02-001-001"                # Set the ID of the modules to use here
 myDevice2 = "tcp:QTL1995-02-001-002"
 myDevice3 = "tcp:QTL1995-02-001-003"
 myDevice4 = "tcp:QTL1995-02-001-004"
@@ -53,9 +53,9 @@ def main():
     if isQisRunning() == False:
         startLocalQis()
 
-	##small delay to allow qis to scan for devices before connecting
+    ##small delay to allow qis to scan for devices before connecting
     time.sleep(5)
-		
+        
     # Create Quarch Device with basic functions - each individual module requires a connection.
     quarchDevice1 = quarchDevice(myDevice1, ConType = "QIS", timeout = 20)
     quarchDevice2 = quarchDevice(myDevice2, ConType = "QIS", timeout = 20)
@@ -73,7 +73,7 @@ def main():
     quarchHDppm6 = quarchPPM(quarchDevice6)
 
     # Create a list with the PPM devices, and call the multi stream example.  This function blocks until the stream is complete so any custom code
-	# you require needs to go within multiDeviceStreamExample
+    # you require needs to go within multiDeviceStreamExample
     quarchHDlist = [quarchHDppm1, quarchHDppm2, quarchHDppm3, quarchHDppm4, quarchHDppm5, quarchHDppm6]
     multiDeviceStreamExample(quarchHDlist)
 
@@ -122,7 +122,7 @@ def multiDeviceStreamExample(quarchHDlist):
         
         # Sets the trigger mode such that the stream is controlled by the script.
         module.sendCommand("Record Trigger Mode Manual")
-		# Set the averaging rage to one sample every ~0.25mS
+        # Set the averaging rage to one sample every ~0.25mS
         module.sendCommand("Record Averaging 64")
 
         # Checks device power state
@@ -189,9 +189,9 @@ def multiDeviceStreamExample(quarchHDlist):
         
         # After the endTime, close the connections with the modules.         
         for module in quarchHDlist:
-            module.stopStream()	
+            module.stopStream() 
 
-			
+            
 
 
 # Call the main() function.

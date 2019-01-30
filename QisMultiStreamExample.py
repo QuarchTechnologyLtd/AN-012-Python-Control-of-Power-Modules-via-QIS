@@ -7,7 +7,7 @@ This might be used when several work loads are being run on a drive, and each is
 ########### VERSION HISTORY ###########
 
 14/12/2016 - Iain Robertson - First version
-24/04/2018 - Andy Norrie	- Updated for QuarchPy
+24/04/2018 - Andy Norrie    - Updated for QuarchPy
 02/10/2018 - Matt Holsey    - Re-updated for QuarchPy
 
 ########### INSTRUCTIONS ###########
@@ -71,7 +71,7 @@ def main():
     fileNameCount = 1
     # Loop to create multiple stream files (5 in this example)
     while fileNameCount < 6:
-	
+    
         # Create the current file name then increment file counter
         fileName = fileNamePart + str(fileNameCount) + '.txt'
         fileNameCount+=1
@@ -84,7 +84,7 @@ def main():
     
         #Loop for the set time (roughly timed in this example), recording data, 
         count = 0        
-        while count < seconds:	
+        while count < seconds:  
             # Count up the total stream time
             time.sleep(0.5)
             count += 0.5
@@ -99,14 +99,14 @@ def main():
         
         # Stop the stream.  This command will block until the buffered stream data has been pulled from the module
         module.stopStream()
-		
-		#pause to allow stop / start stream
+        
+        #pause to allow stop / start stream
         time.sleep(1)
     #buffer remaining stripes have been copied to file,
     #and if averaging was low a large amount of data can be in the backends buffer
     print ''
     print 'Script: Finished Test 1. Data saved to \'' + fileName +'\''
-	
+    
 if __name__=="__main__":
     main()
-	
+    
