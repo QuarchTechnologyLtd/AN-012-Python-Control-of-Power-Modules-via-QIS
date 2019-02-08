@@ -28,7 +28,7 @@ import time
 '''
 Select the device you want to connect to here!
 '''
-myDeviceID = "usb:QTL1999-02-004"          # Connection ID of module
+myDeviceID = "usb:QTL1999-02-001"          # Connection ID of module
 fileNamePart = 'MultiStreamExampleData'     # File name base
 seconds = 20                                # Number of seconds to stream for on each cycle
 
@@ -91,7 +91,7 @@ def main():
             streamStatus = module.streamRunningStatus()#(device=module)
             
             # Print the backend buffer status (used stripes out of total backend buffer size) as a way to view the progress of the stream
-            print 'Script: ' + str(count) + ' out of ' + str(seconds)  +  '. Backend buffer status: Used ' + module.streamBufferStatus() + '. Stream State: ' + streamStatus
+            print ('Script: ' + str(count) + ' out of ' + str(seconds)  +  '. Backend buffer status: Used ' + module.streamBufferStatus() + '. Stream State: ' + streamStatus)
             
             # Check for an overrun and break if found. This will stop the current stream and allow a new one to be started            
             if module.streamInterrupt():
@@ -104,9 +104,9 @@ def main():
         time.sleep(1)
     #buffer remaining stripes have been copied to file,
     #and if averaging was low a large amount of data can be in the backends buffer
-    print ''
-    print 'Script: Finished Test 1. Data saved to \'' + fileName +'\''
-    
+    print ('')
+    print ('Script: Finished Test 1. Data saved to \'' + fileName +'\'')
+	
 if __name__=="__main__":
     main()
     

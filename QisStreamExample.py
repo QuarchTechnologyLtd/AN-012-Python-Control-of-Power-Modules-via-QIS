@@ -28,7 +28,7 @@ from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning, qisIn
 '''
 Select the device you want to connect to here!
 '''
-myDeviceID = "usb::QTL1999-02-004"
+myDeviceID = "usb::QTL1999-02-001"
 
 def main():
 
@@ -201,7 +201,7 @@ def averageStreamExample(module):
     module.streamResampleMode ("1000ms")
     
     # In this example we write to a fixed path
-    module.startStream('Stream1_resampled.txt', 'Example stream to file with resampling')    
+    module.startStream('Stream1_resampled.txt', '1000', 'Example stream to file with resampling')    
     
     # Sleep for 2 seconds to ensure good data before it tries to start up.
     time.sleep(2)
