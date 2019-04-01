@@ -19,7 +19,8 @@ This might be used when several work loads are being run on a drive, and each is
 '''
 
 # Imports the necessary QuarchPy parts. 
-from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning
+import quarchpy
+from quarchpy.qis import *
 
 # Other imports.
 import sys, os
@@ -28,15 +29,20 @@ import time
 '''
 Select the device you want to connect to here!
 '''
-myDeviceID = "usb:QTL1999-02-001"          # Connection ID of module
 fileNamePart = 'MultiStreamExampleData'     # File name base
 seconds = 20                                # Number of seconds to stream for on each cycle
 
 def main():
 
-    # isQisRunning([host='127.0.0.1'], [port=9722]) returns True if QIS is running and False if not and start QIS locally.
+    # Version 2.0.0 or higher expected for this appliation note
+    quarchpy.requiredQuarchpyVersion ("2.0.0")
+
+    # Check if QIS is running([host='127.0.0.1'], [port=9722]) and if not, start QIS locally.
     if isQisRunning() == False:
         startLocalQis()
+
+    #Display and choose module from found modules
+    myDeviceID = GetQisModuleSelection (myQis)
 
     # Specify the device to connect to, we are using a local version of QIS here, otherwise specify "QIS:192.168.1.101:9722"
     myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS", timeout=20)
