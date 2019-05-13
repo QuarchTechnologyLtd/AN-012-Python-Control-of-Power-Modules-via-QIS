@@ -28,13 +28,22 @@ from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning, qisIn
 '''
 Select the device you want to connect to here!
 '''
-myDeviceID = "usb::QTL1999-02-001"
+myDeviceID = "usb::QTL1824-03-201"
 
 def main():
 
     # isQisRunning([host='127.0.0.1'], [port=9722]) returns True if QIS is running and False if not and start QIS locally.
     if isQisRunning() == False:
         startLocalQis()
+
+    # Connect to the localhost QIS instance - you can also specify host='127.0.0.1' and port=9722 for remote control.
+    myQis = qisInterface()
+
+    # small sleep to allow qis to scan for devices
+    time.sleep(5)
+
+    # Request a list of all USB and LAN accessible modules
+    myDeviceID = myQis.GetQisModuleSelection()
 
     # Specify the device to connect to, we are using a local version of QIS here, otherwise specify "QIS:192.168.1.101:9722"
     myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS")

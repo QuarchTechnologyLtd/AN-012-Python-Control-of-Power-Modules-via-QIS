@@ -21,6 +21,7 @@ This might be used when several work loads are being run on a drive, and each is
 # Imports the necessary QuarchPy parts. 
 import quarchpy
 from quarchpy.qis import *
+from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning, qisInterface
 
 # Other imports.
 import sys, os
@@ -37,12 +38,18 @@ def main():
     # Version 2.0.0 or higher expected for this appliation note
     quarchpy.requiredQuarchpyVersion ("2.0.0")
 
-    # Check if QIS is running([host='127.0.0.1'], [port=9722]) and if not, start QIS locally.
+    # isQisRunning([host='127.0.0.1'], [port=9722]) returns True if QIS is running and False if not and start QIS locally.
     if isQisRunning() == False:
         startLocalQis()
 
-    #Display and choose module from found modules
-    myDeviceID = GetQisModuleSelection (myQis)
+    # Connect to the localhost QIS instance - you can also specify host='127.0.0.1' and port=9722 for remote control.
+    myQis = qisInterface()
+
+    # small sleep to allow qis to scan for devices
+    time.sleep(5)
+
+    # Request a list of all USB and LAN accessible modules
+    myDeviceID = myQis.GetQisModuleSelection()
 
     # Specify the device to connect to, we are using a local version of QIS here, otherwise specify "QIS:192.168.1.101:9722"
     myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS", timeout=20)
