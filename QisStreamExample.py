@@ -19,8 +19,9 @@ This example demonstrates several different control actions on power analysis mo
 '''
 import sys, os
 import time
-from quarchpy import quarchDevice, quarchPAM, startLocalQis, isQisRunning, qisInterface
-
+from quarchpy.qis import  startLocalQis, isQisRunning
+from quarchpy.connection_specific.connection_QIS import QisInterface
+from quarchpy.device import quarchPPM, quarchDevice, quarchPAM
 '''
 Select the device you want to connect to here!
 '''
@@ -32,7 +33,7 @@ def main():
         startLocalQis()
 
     # Connect to the localhost QIS instance - you can also specify host='127.0.0.1' and port=9722 for remote control.
-    myQis = qisInterface()
+    myQis = QisInterface()
 
     # small sleep to allow qis to scan for devices
     time.sleep(5)
@@ -43,7 +44,7 @@ def main():
     # Specify the device to connect to, we are using a local version of QIS here, otherwise specify "QIS:192.168.1.101:9722"
     myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS")
     # Convert the base device to a power device
-    myPowerDevice = quarchPAM (myQuarchDevice)
+    myPowerDevice = quarchPAM.quarchPAM(myQuarchDevice)
     
     # Select one or more example functions to run
     simpleStreamExample (myPowerDevice)
