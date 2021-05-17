@@ -9,6 +9,7 @@ This example demonstrates several different control actions on power analysis mo
 ########### VERSION HISTORY ###########
 
 15/10/2018 - Pedro Cruz     -  First Version
+12/05/2012 - Matt Holsey    - Bug fixed - check stream is stopped before continuing with script
 
 ########### INSTRUCTIONS ###########
 
@@ -84,7 +85,12 @@ def simpleStreamExample(module):
 
     # Stop the stream.  This function is blocking and will wait until all remaining data has
     # been downloaded from the module
-    module.stopStream ()
+    module.stopStream()
+
+    # check to ensure stream is fully stopped before continuing script
+    while not "stopped" in str(module.streamRunningStatus()).lower():
+        time.sleep(1)
+
 
 
 '''
