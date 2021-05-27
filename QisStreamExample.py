@@ -57,16 +57,15 @@ This example streams measurement data to file, by default in the same folder as 
 def simpleStreamExample(module):
     # Prints out connected module information
     print ("Running QIS SIMPLE STREAM Example")
-    print ("Module Name:")
-    print (module.sendCommand ("hello?"))
+    print ("Module Name: " + module.sendCommand ("hello?"))
 
     # Sets for a manual record trigger, so we can start the stream from the script
-    print (module.sendCommand ("record:trigger:mode manual"))
+    print ("Set manual Trigger: " + module.sendCommand ("record:trigger:mode manual"))
     # Use 4k averaging (around 1 measurement every 32mS)
-    print (module.sendCommand ("record:averaging 8k"))
+    print ("Set averaging: " + module.sendCommand ("record:averaging 8k"))
     
     # In this example we write to a fixed path
-    module.startStream('Stream1.txt', 2000, 'Example stream to file')    
+    module.startStream('Stream1.csv', 2000, 'Example stream to file')    
 
     # Delay for a x seconds while the stream is running.  You can also continue
     # to run your own commands/scripts here while the stream is recording in the background    
@@ -100,13 +99,12 @@ averaging system to re-sample the stream to an arbitrary timebase
 def averageStreamExample(module):
     # Prints out connected module information
     print ("Running QIS RESAMPLING Example")
-    print ("Module Name:")
-    print (module.sendCommand ("hello?"))
+    print ("Module Name: " + module.sendCommand ("hello?"))
 
     # Sets for a manual record trigger, so we can start the stream from the script
-    print (module.sendCommand ("record:trigger:mode manual"))
-    # Set an initial averaging, a bit faster than the final resolution we want
-    print (module.sendCommand ("record:averaging 16k"))
+    print ("Set manual Trigger: " + module.sendCommand ("record:trigger:mode manual"))
+    # Use 16k averaging as this is a bit faster than we require
+    print ("Set averaging: " + module.sendCommand ("record:averaging 16k"))
     
     # SET RESAMPLING HERE
     # This tells QIS to re-sample the data at a new timebase of 1 samples per second
@@ -114,7 +112,7 @@ def averageStreamExample(module):
     module.streamResampleMode ("1000ms")
     
     # In this example we write to a fixed path
-    module.startStream('Stream1_resampled.txt', '1000', 'Example stream to file with resampling')    
+    module.startStream('Stream1_resampled.csv', '1000', 'Example stream to file with resampling')    
 
     # Delay for 30 seconds while the stream is running.  You can also continue
     # to run your own commands/scripts here while the stream is recording in the background    
