@@ -18,11 +18,13 @@ This example demonstrates several different control actions on power analysis mo
 
 ####################################
 '''
-import sys, os
 import time
-from quarchpy.qis import  startLocalQis, isQisRunning
+
 from quarchpy.connection_specific.connection_QIS import QisInterface
-from quarchpy.device import quarchPPM, quarchDevice, quarchPAM
+from quarchpy.device import quarchDevice, getQuarchDevice, quarchPAM
+from quarchpy.qis import startLocalQis, isQisRunning
+from quarchpy.user_interface.user_interface import quarchSleep
+
 '''
 Select the device you want to connect to here!
 '''
@@ -41,9 +43,10 @@ def main():
 
     # Request a list of all USB and LAN accessible modules
     myDeviceID = myQis.GetQisModuleSelection()
-
+    listOfModules = myQis.qis_scan_devices()
+    print("List of modules: " + str(listOfModules))
     # Specify the device to connect to, we are using a local version of QIS here, otherwise specify "QIS:192.168.1.101:9722"
-    myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS")
+    myQuarchDevice = getQuarchDevice(myDeviceID, ConType = "QIS")
     # Convert the base device to a power device
     myPowerDevice = quarchPAM.quarchPAM(myQuarchDevice)
     
@@ -62,15 +65,15 @@ def simpleStreamExample(module):
     # Sets for a manual record trigger, so we can start the stream from the script
     print ("Set manual Trigger: " + module.sendCommand ("record:trigger:mode manual"))
     # Use 4k averaging (around 1 measurement every 32mS)
-    print ("Set averaging: " + module.sendCommand ("record:averaging 8k"))
+    print ("Set averaging: " + module.sendCommand ("record:averaging 32k"))
     
     # In this example we write to a fixed path
-    module.startStream('Stream1.csv', 2000, 'Example stream to file')    
+    module.startStream('Stream1.csv', 2000, 'Example stream to file')
 
     # Delay for a x seconds while the stream is running.  You can also continue
     # to run your own commands/scripts here while the stream is recording in the background    
     print ("*** Sleep here for a while to allow stream data to record to file")
-    time.sleep(20)
+    quarchSleep(30)
     
     # Check the stream status, so we know if anything went wrong during the stream
     streamStatus = module.streamRunningStatus()

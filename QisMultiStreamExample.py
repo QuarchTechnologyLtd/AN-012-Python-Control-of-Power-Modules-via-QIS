@@ -21,7 +21,7 @@ This might be used when several work loads are being run on a drive, and each is
 # Imports the necessary QuarchPy parts. 
 import quarchpy
 from quarchpy.qis import *
-from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning, qisInterface
+from quarchpy import quarchDevice, getQuarchDevice, quarchPPM, startLocalQis, isQisRunning, qisInterface
 
 # Other imports.
 import sys, os
@@ -52,7 +52,7 @@ def main():
     myDeviceID = myQis.GetQisModuleSelection()
 
     # Specify the device to connect to, we are using a local version of QIS here, otherwise specify "QIS:192.168.1.101:9722"
-    myQuarchDevice = quarchDevice (myDeviceID, ConType = "QIS", timeout=20)
+    myQuarchDevice = getQuarchDevice(myDeviceID, ConType = "QIS", timeout=20)
     # Convert the base device to a power device
     module = quarchPPM (myQuarchDevice)
 

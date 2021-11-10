@@ -22,13 +22,13 @@ For remote QIS, comment out the 'openQis()' command and specify the IP:Port in t
 
 ####################################
 '''
-# Imports the necessary QuarchPy parts. 
-from quarchpy import quarchDevice, quarchPPM, startLocalQis, isQisRunning, qisInterface
-
 # Other imports.
-import sys, os
+import os
+import sys
 import time
 
+# Imports the necessary QuarchPy parts.
+from quarchpy import quarchDevice, getQuarchDevice, quarchPPM, startLocalQis, isQisRunning
 
 ''' 
 Set the filename, duration and file size limit here if you need
@@ -57,12 +57,12 @@ def main():
     time.sleep(5)
         
     # Create Quarch Device with basic functions - each individual module requires a connection.
-    quarchDevice1 = quarchDevice(myDevice1, ConType = "QIS", timeout = 20)
-    quarchDevice2 = quarchDevice(myDevice2, ConType = "QIS", timeout = 20)
-    quarchDevice3 = quarchDevice(myDevice3, ConType = "QIS", timeout = 20)
-    quarchDevice4 = quarchDevice(myDevice4, ConType = "QIS", timeout = 20)
-    quarchDevice5 = quarchDevice(myDevice5, ConType = "QIS", timeout = 20)
-    quarchDevice6 = quarchDevice(myDevice6, ConType = "QIS", timeout = 20)
+    quarchDevice1 = getQuarchDevice(myDevice1, ConType = "QIS", timeout = 20)
+    quarchDevice2 = getQuarchDevice(myDevice2, ConType = "QIS", timeout = 20)
+    quarchDevice3 = getQuarchDevice(myDevice3, ConType = "QIS", timeout = 20)
+    quarchDevice4 = getQuarchDevice(myDevice4, ConType = "QIS", timeout = 20)
+    quarchDevice5 = getQuarchDevice(myDevice5, ConType = "QIS", timeout = 20)
+    quarchDevice6 = getQuarchDevice(myDevice6, ConType = "QIS", timeout = 20)
 
     # Upgrade the basic Quarch Devices to PPMs modules, adding specific functions.
     quarchHDppm1 = quarchPPM(quarchDevice1)
