@@ -47,7 +47,7 @@ def main():
     myDeviceID = myQis.GetQisModuleSelection()
     listOfModules = myQis.qis_scan_devices()
     # Specify the device to connect to, we are using a local version of QIS here, otherwise specify "QIS:192.168.1.101:9722"
-    myQuarchDevice = quarchDevice(myDeviceID, ConType = "QIS")
+    myQuarchDevice = getQuarchDevice(myDeviceID, ConType = "QIS")
     # Convert the base device to a power device
     myPowerDevice = quarchPPM(myQuarchDevice)
     
