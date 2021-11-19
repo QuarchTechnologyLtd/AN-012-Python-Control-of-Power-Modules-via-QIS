@@ -21,8 +21,8 @@ This example demonstrates several different control actions on power analysis mo
 import time
 
 from quarchpy.connection_specific.connection_QIS import QisInterface
-from quarchpy.device import quarchDevice, getQuarchDevice, quarchPAM
-from quarchpy.qis import startLocalQis, isQisRunning
+from quarchpy.device import quarchDevice, getQuarchDevice, quarchPPM
+from quarchpy.qis import startLocalQis, isQisRunning, closeQis
 from quarchpy.user_interface.user_interface import quarchSleep
 
 '''
@@ -32,27 +32,31 @@ Select the device you want to connect to here!
 def main():
 
     # isQisRunning([host='127.0.0.1'], [port=9722]) returns True if QIS is running and False if not and start QIS locally.
+    closeQisAtEndOfTest=False
     if isQisRunning() == False:
         startLocalQis()
+        closeQisAtEndOfTest=True # QIS will only be closed if it was launched by this script and left open otherwise.
 
     # Connect to the localhost QIS instance - you can also specify host='127.0.0.1' and port=9722 for remote control.
     myQis = QisInterface()
 
     # small sleep to allow qis to scan for devices
-    time.sleep(5)
+    quarchSleep(5)
 
     # Request a list of all USB and LAN accessible modules
     myDeviceID = myQis.GetQisModuleSelection()
     listOfModules = myQis.qis_scan_devices()
-    print("List of modules: " + str(listOfModules))
     # Specify the device to connect to, we are using a local version of QIS here, otherwise specify "QIS:192.168.1.101:9722"
-    myQuarchDevice = getQuarchDevice(myDeviceID, ConType = "QIS")
+    myQuarchDevice = quarchDevice(myDeviceID, ConType = "QIS")
     # Convert the base device to a power device
-    myPowerDevice = quarchPAM.quarchPAM(myQuarchDevice)
+    myPowerDevice = quarchPPM(myQuarchDevice)
     
     # Select one or more example functions to run
     simpleStreamExample (myPowerDevice)
     averageStreamExample (myPowerDevice)
+
+    if closeQisAtEndOfTest==True:
+        closeQis()
 
 '''
 This example streams measurement data to file, by default in the same folder as the script
@@ -119,21 +123,21 @@ def averageStreamExample(module):
 
     # Delay for 30 seconds while the stream is running.  You can also continue
     # to run your own commands/scripts here while the stream is recording in the background    
-    time.sleep(30)
+    quarchSleep(30)
     
     # Check the stream status, so we know if anything went wrong during the stream
     streamStatus = module.streamRunningStatus()
     if ("Stopped" in streamStatus):
         if ("Overrun" in streamStatus):
-            print ('Stream interrupted due to internal device buffer has filled up')
+            print('Stream interrupted due to internal device buffer has filled up')
         elif ("User" in streamStatus):
-            print ('Stream interrupted due to max file size has being exceeded')            
+            print('Stream interrupted due to max file size has being exceeded')
         else:
             print("Stopped for unknown reason")
 
     # Stop the stream.  This function is blocking and will wait until all remaining data has
     # been downloaded from the module
-    module.stopStream ()
+    module.stopStream()
 
 # Calling the main() function
 if __name__=="__main__":
