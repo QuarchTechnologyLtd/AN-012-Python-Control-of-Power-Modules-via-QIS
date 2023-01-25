@@ -19,7 +19,6 @@
     <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="QisListDevices.py" />
     <Compile Include="QisMultiStreamExample.py" />
     <Compile Include="QisStreamExample.py" />
     <Compile Include="QisStreamx6Example.py" />
