@@ -88,6 +88,15 @@ def main():
     # Convert the base device class to a power device, which provides additional controls, such as data streaming
     myPowerDevice = quarchPPM(myQuarchDevice)
     
+    # This ensures the latest stream header is used, even for older devices.  This will soon become the default, but is in here for now
+    # as is ensures the output CSV is in the latest format with units added to the row headers.
+    myPowerDevice.sendCommand ("stream mode header v3")
+    
+    # These are optional commands which create additional channels in the output for power (current * voltage) and total power 
+    # (sum of individual power channels).  This can be useful if you don't want to calculate it in post processing
+    myPowerDevice.sendCommand ("stream mode power enable")
+    myPowerDevice.sendCommand ("stream mode power total enable")
+    
     # Select one or more example functions to run, you can comment any of these out if you do not want to run them
     simpleStreamExample (myPowerDevice)
     averageStreamExample (myPowerDevice)
