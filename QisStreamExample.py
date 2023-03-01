@@ -71,10 +71,6 @@ def main():
     # Connect to the localhost QIS instance
     myQis = QisInterface()
 
-    # Small sleep to allow qis to scan for devices
-    print ("Waiting for modules...")
-    quarchSleep(5)
-
     # Ask the user to select a module to use, via the console.
     myDeviceID = myQis.GetQisModuleSelection()
     print ("Module Selected: " + myDeviceID + "\n")
