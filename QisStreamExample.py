@@ -23,11 +23,13 @@ QIS is distributed as part of the Quarchpy python package and does not require s
 
 1- Python (3.x recommended)
     https://www.python.org/downloads/
-2- Quarchpy python package
+2- Java 8, with JaxaFX
+    https://quarch.com/support/faqs/java/
+3- Quarchpy python package
     https://quarch.com/products/quarchpy-python-package/
-3- Quarch USB driver (Required for USB connected devices on windows only)
+4- Quarch USB driver (Required for USB connected devices on windows only)
     https://quarch.com/downloads/driver/
-4- Check USB permissions if using Linux:
+5- Check USB permissions if using Linux:
     https://quarch.com/support/faqs/usb/
 
 ########### INSTRUCTIONS ###########
@@ -115,7 +117,7 @@ def simpleStreamExample(module):
     
     # In this example we write to a fixed path
     print ("\nStarting Recording!")
-    module.startStream('Stream1.csv', 2000, 'Example stream to file')
+    module.startStream('Stream1.csv')
 
     # Delay for 30 seconds while the stream is running.  You can also continue
     # to run your own commands/scripts here while the stream is recording in the background  
