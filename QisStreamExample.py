@@ -72,6 +72,7 @@ def main():
 
     # Connect to the localhost QIS instance
     myQis = QisInterface()
+    print ("QIS Version: " + myQis.sendAndReceiveCmd(cmd='$version'))
 
     # Ask the user to select a module to use, via the console.
     myDeviceID = myQis.GetQisModuleSelection()
