@@ -48,10 +48,7 @@ import logging  # Optionally used to create a log to help with debugging
 from quarchpy.device import *
 from quarchpy.qis import *
 from quarchpy.user_interface.user_interface import quarchSleep
-
-'''
-Select the device you want to connect to here!
-'''
+from quarchpy import __version__ as quarchpyVersion
 
 def main():
 
@@ -61,21 +58,29 @@ def main():
     # logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
 
     print ("\n\nQuarch application note example: AN-012")
-    print ("---------------------------------------\n\n")
+    print ("---------------------------------------")
+    print("Using QuarchPy v"+ quarchpyVersion)
 
     # Start QIS (if it is already running, skip this step and also avoid closing it at the end)
-    print ("Starting QIS...\n")
+    print ("Checking for QIS...")
     closeQisAtEndOfTest=False
     if isQisRunning() == False:
+        print("Starting QIS")
         startLocalQis()
         closeQisAtEndOfTest=True
-
+    else:
+        print("QIS already running. Using this instance.")
     # Connect to the localhost QIS instance
     myQis = QisInterface()
-    print ("QIS Version: " + myQis.sendAndReceiveCmd(cmd='$version'))
+    print ("QIS Version: " + myQis.sendAndReceiveCmd(cmd='$version')+"\n\n")
 
     # Ask the user to select a module to use, via the console.
-    myDeviceID = myQis.GetQisModuleSelection()
+    myDeviceID = myQis.GetQisModuleSelection(additionalOptions=['Rescan', 'All Con Types', 'Ip Scan','Quit'])
+    if myDeviceID.lower()=="quit":
+        print("User Selected Quit.")
+        if closeQisAtEndOfTest:
+            closeQis()
+        return
     print ("Module Selected: " + myDeviceID + "\n")
     
     # If you know the name of the module you would like to talk to then you can skip module selection and hardcode the string.
@@ -132,7 +137,7 @@ def simpleStreamExample(module):
         if ("Overrun" in streamStatus):
             print ('\tStream interrupted due to internal device buffer has filled up')
         elif ("User" in streamStatus):
-            print ('\tStream interrupted due to max file size has being exceeded')            
+            print ('\tStream interrupted due to max file size has being exceeded')
         else:
             print("\tStopped for unknown reason")
     else:
@@ -141,7 +146,8 @@ def simpleStreamExample(module):
     # Stop the stream.  This function is blocking and will wait until all remaining data has
     # been downloaded from the module
     print ("\nStopping the stream...")
-    module.stopStream()   
+    print(str(module.stopStream()))
+
 
     print ("\nQIS SIMPLE STREAM Example - Complete!\n\n")
 
@@ -169,11 +175,11 @@ def averageStreamExample(module):
     
     # In this example we write to a fixed path
     print ("\nStarting Recording!")
-    module.startStream('Stream1_resampled.csv', '1000', 'Example stream to file with resampling')    
+    module.startStream('Stream1_resampled.csv', '1000', 'Example stream to file with resampling')
 
     # Delay for 30 seconds while the stream is running.  You can also continue
-    # to run your own commands/scripts here while the stream is recording in the background  
-    print ("\nWait a while, for a period of data to record\n")  
+    # to run your own commands/scripts here while the stream is recording in the background
+    print ("\nWait a while, for a period of data to record\n")
     quarchSleep(30)
     
     # Check the stream status, so we know if anything went wrong during the capture period
@@ -191,7 +197,8 @@ def averageStreamExample(module):
 
     # Stop the stream.  This function is blocking and will wait until all remaining data has
     # been downloaded from the module
-    module.stopStream()
+    print ("\nStopping the stream...")
+    print(str(module.stopStream()))
 
     print ("\nQIS RESAMPLING Example - Complete!\n\n")
 
